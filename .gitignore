@@ -11,6 +11,7 @@
 node_modules/
 tools/coding-tools-runtime/
 git-push-logs/
+game/src/night-drive.generated.js
 .gradle/
 .cxx/
 .externalNativeBuild/

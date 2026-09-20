@@ -3,7 +3,7 @@ import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const project = resolve(import.meta.dirname, '..');
-const sharpPath = join(project, '..', 'mistbound', 'node_modules', 'sharp', 'lib', 'index.js');
+const sharpPath = join(project, 'game', 'node_modules', 'sharp', 'lib', 'index.js');
 const { default: sharp } = await import(pathToFileURL(sharpPath).href);
 const assets = join(project, 'release-assets');
 const source = join(assets, 'taptap-promo-character-background.png');

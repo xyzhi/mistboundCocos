@@ -3,7 +3,7 @@ import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const project = resolve(import.meta.dirname, '..');
-const original = resolve(project, '..', 'mistbound');
+const original = join(project, 'game');
 const source = join(project, 'release-assets', 'taptap-icon-source.png');
 const sharpModule = pathToFileURL(join(original, 'node_modules', 'sharp', 'lib', 'index.js')).href;
 const { default: sharp } = await import(sharpModule);

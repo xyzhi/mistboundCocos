@@ -3,8 +3,9 @@ import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const project = resolve(import.meta.dirname, '..');
-const source = resolve(project, '..', 'mistbound');
+const source = join(project, 'game');
 const output = join(project, 'native', 'engine', 'android', 'app', 'src', 'main', 'assets', 'mistbound');
+await import(pathToFileURL(join(source, 'scripts', 'embed-audio.mjs')).href);
 const viteModule = pathToFileURL(join(source, 'node_modules', 'vite', 'dist', 'node', 'index.js')).href;
 const { build } = await import(viteModule);
 

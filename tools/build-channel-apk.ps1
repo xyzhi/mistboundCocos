@@ -70,6 +70,12 @@ $env:ANDROID_SDK_ROOT = $sdk
 $env:JAVA_TOOL_OPTIONS = '-Djava.net.preferIPv4Stack=true'
 $env:PATH = $ninja + ';' + $env:PATH
 
+$viteEntry = Join-Path $project 'game\node_modules\vite\dist\node\index.js'
+$sharpEntry = Join-Path $project 'game\node_modules\sharp\lib\index.js'
+if (!(Test-Path $viteEntry) -or !(Test-Path $sharpEntry)) {
+    throw 'Missing game Node dependencies. Run setup-game.bat once before building the APK.'
+}
+
 Push-Location $project
 try {
     & node tools/build-original-web.mjs

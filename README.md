@@ -1,6 +1,20 @@
 # 下一站，晚安 · Android 工程
 
-这是 Cocos Creator 3.8.8 的 Android 工程。游戏主体来自相邻的 `mistbound` H5 项目，打包脚本会重新构建该网页并放入 APK；Android 的 `AppActivity` 通过 WebView 加载包内资源。编辑器里的 `assets/scenes/Main.scene` 则用于 Cocos 预览。
+这是 Cocos Creator 3.8.8 的 Android 工程，也是《下一站，晚安》的唯一源码仓库。H5/React 游戏主体已经合并到本仓库的 `game/` 目录，打包脚本会从 `game/` 重新构建网页并放入 APK；Android 的 `AppActivity` 通过 WebView 加载包内资源。编辑器里的 `assets/scenes/Main.scene` 则用于 Cocos 预览。
+
+## 单仓库目录
+
+- `game/`：实际游戏逻辑、React UI、战斗系统和测试。
+- `assets/`：Cocos 资源，同时保存 H5 与 Cocos 共用的运行时美术/音乐。
+- `native/`：Android 原生工程。
+- `tools/`：Web、Android、商店素材等统一构建脚本。
+
+不再依赖同级目录 `../mistbound`。首次拉取仓库后先在 `game/` 安装一次 Node 依赖：
+
+```bat
+cd game
+npm ci
+```
 
 ## 两个渠道包
 
@@ -15,11 +29,11 @@
 
 ## 首次准备
 
-1. 用 Cocos Creator 3.8.8 打开本目录，至少构建一次 Android 工程，确保 `build/android-debug/proj` 存在。本机已导出该工程；BAT 复用它进行 Gradle 编译，不会每次重新启动 Creator。若移动了工程目录，需在 Creator 中重新导出，使 `NATIVE_DIR` 指向新位置。
+1. 在 `game/` 执行一次 `npm ci` 安装 H5 构建依赖；随后用 Cocos Creator 3.8.8 打开本目录，至少构建一次 Android 工程，确保 `build/android-debug/proj` 存在。本机已导出该工程；BAT 复用它进行 Gradle 编译，不会每次重新启动 Creator。若移动了工程目录，需在 Creator 中重新导出，使 `NATIVE_DIR` 指向新位置。
 2. 保管 `signing/next-stop-goodnight.jks` 与 `signing/credentials.json`。两者都被 `.gitignore` 排除，丢失后不能用相同包名正常覆盖已发布的 APK。脚本不会擅自生成新证书。
 3. TapTap 版需要 Client ID 与 Client Token。可在当前命令行设置 `TAPTAP_CLIENT_ID`、`TAPTAP_CLIENT_TOKEN` 环境变量；双击 BAT 时，可在被忽略的 `signing/taptap-client.json` 中填写 `{"clientId":"...","clientToken":"..."}`。当前本机旧构建的 BuildConfig 也可作为兼容读取来源；清理 `build` 后应改用前两种方式。不要把真实凭证提交到仓库。通用版不需要这两项。
 
-BAT 每次运行 `tools/build-original-web.mjs` 更新原 H5 资源，运行 `tools/build-android-icons.mjs` 更新图标，再调用对应的 Gradle Release 任务，以时间戳新建 APK 并输出 SHA-256、包名与签名摘要。脚本需要本机已有的 JDK、Android SDK/NDK、Gradle、Ninja 和相邻的 H5 项目依赖；具体路径集中在 `tools/build-channel-apk.ps1`。
+BAT 每次运行 `tools/build-original-web.mjs` 从仓库内 `game/` 更新 H5 资源，运行 `tools/build-android-icons.mjs` 更新图标，再调用对应的 Gradle Release 任务，以时间戳新建 APK 并输出 SHA-256、包名与签名摘要。脚本需要本机已有的 JDK、Android SDK/NDK、Gradle、Ninja，以及 `game/node_modules` 中的 Node 依赖；具体路径集中在 `tools/build-channel-apk.ps1`。
 
 如果改动的是 Cocos 场景或原生工程模板，而不是 H5 内容/图标/渠道代码，请先在 Cocos Creator 的「项目 → 构建发布」重新构建 Android 工程，再双击 BAT。当前自动化并不替代从零导出 Cocos 工程的验证。
 
