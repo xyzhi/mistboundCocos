@@ -1,0 +1,40 @@
+{
+  "taskName": "android-debug",
+  "platform": "android",
+  "name": "下一站，晚安",
+  "outputName": "android-debug",
+  "buildPath": "project://build",
+  "startScene": "89c30112-ae05-4620-8667-149c98a8b764",
+  "scenes": [
+    {
+      "url": "db://assets/scenes/Main.scene",
+      "uuid": "89c30112-ae05-4620-8667-149c98a8b764"
+    }
+  ],
+  "debug": true,
+  "md5Cache": false,
+  "packages": {
+    "android": {
+      "packageName": "com.xyzhi.nextstopgoodnight",
+      "apiLevel": 35,
+      "appABIs": ["arm64-v8a"],
+      "useDebugKeystore": true,
+      "orientation": {
+        "landscapeRight": false,
+        "landscapeLeft": false,
+        "portrait": true,
+        "upsideDown": false
+      },
+      "appBundle": false,
+      "androidInstant": false,
+      "sdkPath": "D:\\Program Files\\Unity\\Editor\\2022.3.61f1c1\\Editor\\Data\\PlaybackEngines\\AndroidPlayer\\SDK",
+      "ndkPath": "D:\\Program Files\\Unity\\Editor\\2022.3.61f1c1\\Editor\\Data\\PlaybackEngines\\AndroidPlayer\\NDK",
+      "javaHome": "E:\\tools\\JDK\\jdk-17.0.20.1+1",
+      "renderBackEnd": {
+        "vulkan": false,
+        "gles3": true,
+        "gles2": false
+      }
+    }
+  }
+}

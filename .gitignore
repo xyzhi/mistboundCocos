@@ -1,0 +1,36 @@
+/build/
+/temp/
+/library/
+/local/
+/profiles/
+*.log
+/dist/
+/signing/
+
+# Generated dependencies and native build caches
+node_modules/
+tools/coding-tools-runtime/
+.gradle/
+.cxx/
+.externalNativeBuild/
+*.apk
+*.aab
+*.apks
+*.idsig
+
+# Local machine state
+/%SystemDrive%/
+local.properties
+.idea/
+.vs/
+
+# Local credentials and private signing keys
+.env
+.env.*
+!.env.example
+credentials.json
+taptap-client.json
+*.jks
+*.keystore
+*.p12
+*.pfx

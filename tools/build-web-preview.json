@@ -1,0 +1,16 @@
+{
+  "taskName": "web-preview",
+  "platform": "web-mobile",
+  "name": "下一站，晚安",
+  "outputName": "web-preview",
+  "buildPath": "project://build",
+  "startScene": "89c30112-ae05-4620-8667-149c98a8b764",
+  "scenes": [
+    {
+      "url": "db://assets/scenes/Main.scene",
+      "uuid": "89c30112-ae05-4620-8667-149c98a8b764"
+    }
+  ],
+  "debug": true,
+  "md5Cache": false
+}
