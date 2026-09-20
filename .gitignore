@@ -10,6 +10,7 @@
 # Generated dependencies and native build caches
 node_modules/
 tools/coding-tools-runtime/
+git-push-logs/
 .gradle/
 .cxx/
 .externalNativeBuild/
