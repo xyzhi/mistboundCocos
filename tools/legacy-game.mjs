@@ -1,4 +1,4 @@
-export const CHEATS_ENABLED = false;
+export const CHEATS_ENABLED = true;
 export const VERSION = 45;
 export const MEMORY_COOLDOWN_STEPS = 15;
 export const SAVE_KEY = 'goodnight-next-stop.run.v8';

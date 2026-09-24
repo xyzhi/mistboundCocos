@@ -5,12 +5,15 @@
 /profiles/
 *.log
 /dist/
+game/dist/
 /signing/
 
 # Generated dependencies and native build caches
 node_modules/
 tools/coding-tools-runtime/
-git-push-logs/
+tools/wifi-preview-app/.gradle/
+tools/wifi-preview-app/app/build/
+tools/wifi-preview-app/build/
 game/src/night-drive.generated.js
 .gradle/
 .cxx/
@@ -36,3 +39,4 @@ taptap-client.json
 *.keystore
 *.p12
 *.pfx
+tools/openai-tunnel-client/private/

@@ -1,11 +1,29 @@
 param(
     [Parameter(Mandatory = $true)]
     [ValidateSet('TapTap', 'Generic')]
-    [string]$Channel
+    [string]$Channel,
+    [string]$LogFile
 )
 
 $ErrorActionPreference = 'Stop'
 $project = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
+$channelNameForLog = $Channel.ToLowerInvariant()
+if (-not $LogFile) {
+    $defaultLogDir = Join-Path $project 'log\build'
+    New-Item -ItemType Directory -Path $defaultLogDir -Force | Out-Null
+    $LogFile = Join-Path $defaultLogDir ("build-{0}-{1}.log" -f $channelNameForLog, (Get-Date -Format 'yyyyMMdd_HHmmss'))
+}
+$transcriptStarted = $false
+if ($LogFile) {
+    $logDirectory = Split-Path -Parent $LogFile
+    if ($logDirectory) {
+        New-Item -ItemType Directory -Path $logDirectory -Force | Out-Null
+    }
+    Start-Transcript -LiteralPath $LogFile -Force | Out-Null
+    $transcriptStarted = $true
+}
+
+try {
 $gradleProject = Join-Path $project 'build\android-debug\proj'
 $java = 'E:\tools\JDK\jdk-17.0.20.1+1'
 $sdk = 'D:\Program Files\Unity\Editor\2022.3.61f1c1\Editor\Data\PlaybackEngines\AndroidPlayer\SDK'
@@ -73,12 +91,14 @@ $env:PATH = $ninja + ';' + $env:PATH
 $viteEntry = Join-Path $project 'game\node_modules\vite\dist\node\index.js'
 $sharpEntry = Join-Path $project 'game\node_modules\sharp\lib\index.js'
 if (!(Test-Path $viteEntry) -or !(Test-Path $sharpEntry)) {
-    throw 'Missing game Node dependencies. Run setup-game.bat once before building the APK.'
+    throw 'Missing game Node dependencies. Run 初始化游戏依赖.bat once before building the APK.'
 }
 
 Push-Location $project
 try {
-    & node tools/build-original-web.mjs
+    $webBuildArguments = @('tools/build-original-web.mjs')
+    if ($Channel -eq 'TapTap') { $webBuildArguments += '--disable-cheats' }
+    & node @webBuildArguments
     if ($LASTEXITCODE -ne 0) { throw 'Web game build failed.' }
     & node tools/build-android-icons.mjs
     if ($LASTEXITCODE -ne 0) { throw 'Android icon build failed.' }
@@ -117,4 +137,9 @@ Write-Output $package
 Write-Output $signer
 if ($Channel -eq 'Generic') {
     Write-Warning 'Generic APK has no TapTap login or anti-addiction. Do not submit it to TapTap or another store requiring those services.'
+}
+} finally {
+    if ($transcriptStarted) {
+        Stop-Transcript | Out-Null
+    }
 }

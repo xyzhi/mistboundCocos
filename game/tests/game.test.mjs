@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { BLACK_MARKET_GEAR_PRICES, BLACK_MARKET_RANDOM_CARD_PRICES, BLACK_MARKET_SHOWN_CARD_PRICES, CARDS, CHARACTERS, CHAPTER_LOOT, CHECKPOINTS, CHECKPOINT_STEPS, CORE_REWARDS, DIFFICULTIES, DISORDER_GOLD_LOSS_PERCENT, ENCOUNTERS, ENEMIES, EQUIPMENT_ART, ITEMS, MAP_STEPS, MAX_PLAYER_LEVEL, MAX_SPECIALIZATION_POINTS, MYSTERY_STATIONS, REWARDS, SKILL_UNLOCKS, SPECIALIZATIONS, ambientEventValues, attackBreakdown, attackPreview, beginBattle, blackMarketCardPrice, blackMarketCardRanks, blackMarketGearPrice, buildChapterMap, canInvestSpecialization, card, chooseAutoCard, commissionStatus, compareCardKeys, description, disorderGoldLoss, enemyFor, enemyInitialDamageMultiplier, equipmentDropCount, equipmentInnateSkillChance, equipmentRandomSkillChance, equipmentRarityChances, equipmentSkillDropScale, equipmentStats, facilityCost, intent, itemBaseStats, itemFor, itemStats, itemTier, itemUpgradeCost, magicHouseCooldownRemaining, newRun, rerollCost, restore, reviveCost, salvageValue, serialize, sideCardTurnInCandidates, skillRewardRank, specializationAvailablePoints, specializationNodeText, specializationPointTotal, specializationSpent, specializationUnlocked, transition } from '../src/game.mjs';
+import { BLACK_MARKET_GEAR_PRICES, BLACK_MARKET_RANDOM_CARD_PRICES, BLACK_MARKET_SHOWN_CARD_PRICES, CARDS, CHARACTERS, CHAPTER_LOOT, CHECKPOINTS, CHECKPOINT_STEPS, CORE_REWARDS, DIFFICULTIES, DISORDER_GOLD_LOSS_PERCENT, ENCOUNTERS, ENEMIES, EQUIPMENT_ART, ITEMS, MAP_STEPS, MAX_BATTLE_ENEMIES, MAX_PLAYER_LEVEL, MAX_SPECIALIZATION_POINTS, MYSTERY_STATIONS, REWARDS, SKILL_UNLOCKS, SPECIALIZATIONS, ambientEventValues, attackBreakdown, attackPreview, beginBattle, blackMarketCardPrice, blackMarketCardRanks, blackMarketGearPrice, buildChapterMap, canInvestSpecialization, card, chooseAutoCard, commissionStatus, compareCardKeys, description, disorderGoldLoss, elementMultiplier, enemyFor, enemyInitialDamageMultiplier, equipmentDropCount, equipmentInnateSkillChance, equipmentRandomSkillChance, equipmentRarityChances, equipmentSkillDropScale, equipmentStats, facilityCost, intent, itemBaseStats, itemFor, itemStats, itemTier, itemUpgradeCost, livingEnemies, magicHouseCooldownRemaining, newRun, rerollCost, restore, reviveCost, salvageValue, serialize, sideCardTurnInCandidates, skillRewardRank, specializationAvailablePoints, specializationNodeText, specializationPointTotal, specializationSpent, specializationUnlocked, transition } from '../src/game.mjs';
 
 const leaveHub = (state, stage = 0) => {
   let next = transition(state, { type: 'depart', stage });
@@ -232,7 +232,7 @@ test('双属性一级卡预留成长空间，单属性卡使用完整基础预�
   const dualStatKeys = Object.entries(CARDS)
     .filter(([, value]) => ['damage', 'block', 'heal'].filter(field => value[field]).length >= 2)
     .map(([key]) => key);
-  assert.deepEqual(dualStatKeys, ['riposte', 'leech', 'tea', 'stayAwhile', 'goodnight', 'steadyTea', 'sharedUmbrella', 'nightWatch', 'lastWarmth']);
+  assert.deepEqual(dualStatKeys, ['riposte', 'leech', 'tea', 'stayAwhile', 'goodnight', 'steadyTea', 'sharedUmbrella', 'nightWatch', 'lastWarmth', 'tidalEcho', 'stoneBreaker']);
   assert.ok(dualStatKeys.every(key => CARDS[key].dualStat));
   assert.deepEqual(['riposte', 'leech', 'mend'].map(total), [9, 9, 10]);
 });
@@ -307,6 +307,76 @@ test('第一章普通与精英使用独立敌人池且机制清晰区分', () =>
   assert.ok(Math.min(...elites.map(enemy => enemy.hp * 1.5)) > Math.max(...normal.map(enemy => enemy.hp)));
 });
 
+test('1vN 战斗会生成多个独立敌人且不超过四个单位', () => {
+  const state = newRun(2401, 'manual');
+  Object.assign(state, { stage: 0, mapRow: 5, foe: 0, elite: false, bossFight: false });
+  beginBattle(state);
+  assert.equal(state.allies.length, 1);
+  assert.equal(state.enemies.length, 3);
+  assert.equal(livingEnemies(state).length, 3);
+  assert.ok(state.enemies.every(unit => unit.id && unit.side === 'enemy' && unit.hp > 0 && unit.maxHp > 0));
+  assert.ok(state.enemies.length <= MAX_BATTLE_ENEMIES);
+});
+
+test('单体牌只命中指定敌人，群体牌命中所有存活敌人', () => {
+  const state = newRun(2402, 'manual');
+  Object.assign(state, { stage: 0, mapRow: 5, foe: 0, elite: false, bossFight: false });
+  beginBattle(state);
+  state.energy = 9;
+  state.hand = ['stoneBreaker', 'emberSweep'];
+  const target = state.enemies[1];
+  const beforeSingle = state.enemies.map(unit => unit.hp);
+  const single = transition(state, { type: 'play', index: 0, targetId: target.id });
+  single.enemies.forEach((unit, index) => {
+    if (unit.id === target.id) assert.ok(unit.hp < beforeSingle[index]);
+    else assert.equal(unit.hp, beforeSingle[index]);
+  });
+  const beforeAll = single.enemies.map(unit => unit.hp);
+  const all = transition(single, { type: 'play', index: 0 });
+  all.enemies.forEach((unit, index) => assert.ok(unit.hp < beforeAll[index]));
+});
+
+test('四元素只奖励克制关系，不对逆向关系施加减伤', () => {
+  assert.equal(elementMultiplier('fire', 'wind'), 1.25);
+  assert.equal(elementMultiplier('wind', 'earth'), 1.25);
+  assert.equal(elementMultiplier('earth', 'water'), 1.25);
+  assert.equal(elementMultiplier('water', 'fire'), 1.25);
+  assert.equal(elementMultiplier('wind', 'fire'), 1);
+  assert.equal(elementMultiplier('fire', 'water'), 1);
+  assert.equal(elementMultiplier('neutral', 'wind'), 1);
+});
+
+test('Boss 召唤占用行动且新召唤物不会在出现当回合攻击', () => {
+  const state = newRun(2403, 'manual');
+  Object.assign(state, { stage: 0, mapRow: 12, foe: 0, elite: false, bossFight: true });
+  beginBattle(state);
+  state.turn = 2;
+  state.hand = [];
+  state.hp = 500;
+  state.maxHp = 500;
+  const beforeHp = state.hp;
+  const next = transition(state, { type: 'end' });
+  assert.equal(next.hp, beforeHp);
+  assert.equal(next.enemies.length, 2);
+  assert.equal(next.enemies.filter(unit => unit.kind === 'summon').length, 1);
+  assert.ok(next.battleLog.some(line => line.includes('召唤')));
+});
+
+test('敌方召唤始终受四单位硬上限约束', () => {
+  let state = newRun(2404, 'manual');
+  Object.assign(state, { stage: 0, mapRow: 12, foe: 0, elite: false, bossFight: true });
+  beginBattle(state);
+  state.hp = 10000;
+  state.maxHp = 10000;
+  state.hand = [];
+  for (let index = 0; index < 14 && state.phase === 'combat'; index++) {
+    state = transition(state, { type: 'end' });
+    state.hand = [];
+  }
+  assert.ok(state.enemies.length > 1);
+  assert.ok(state.enemies.length <= MAX_BATTLE_ENEMIES);
+});
+
 test('跨章后普通怪承接前章末段压力，精英怪强于前章 Boss', () => {
   const start = ({ difficulty, stage, foe = 0, elite = false, bossFight = false, mapRow }) => {
     const state = newRun(2500 + stage * 10 + foe, 'manual', difficulty);
@@ -335,8 +405,10 @@ test('跨章后普通怪承接前章末段压力，精英怪强于前章 Boss', 
         const elite = start({ difficulty, stage, foe, elite: true, mapRow: 0 });
         assert.ok(normal.enemy.maxHp >= Math.round(previousNormalHp * normalHpScales[stage]), `${difficulty} 第${stage + 1}章普通怪生命跨章回落`);
         assert.ok(peakPressure(normal) >= previousNormalPressure * normalDamageScales[stage] - 1e-9, `${difficulty} 第${stage + 1}章普通怪攻势跨章回落`);
-        assert.ok(elite.enemy.maxHp >= Math.round(previousBoss.enemy.maxHp * eliteHpScales[stage]), `${difficulty} 第${stage + 1}章精英生命低于前章Boss`);
-        assert.ok(peakPressure(elite) >= peakPressure(previousBoss) * eliteDamageScales[stage] - 1e-9, `${difficulty} 第${stage + 1}章精英攻势低于前章Boss`);
+        const elitePartyHp = elite.enemies.reduce((sum, unit) => sum + unit.maxHp, 0);
+        const elitePartyPressure = elite.enemies.reduce((sum, unit) => sum + peakPressure({ ...elite, selectedEnemyId: unit.id, enemy: unit }), 0);
+        assert.ok(elitePartyHp >= Math.round(previousBoss.enemy.maxHp * eliteHpScales[stage]), `${difficulty} 第${stage + 1}章精英队伍总生命低于前章Boss`);
+        assert.ok(elitePartyPressure >= peakPressure(previousBoss) * eliteDamageScales[stage] - 1e-9, `${difficulty} 第${stage + 1}章精英队伍总攻势低于前章Boss`);
       }
     }
   }

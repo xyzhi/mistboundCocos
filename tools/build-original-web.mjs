@@ -5,6 +5,7 @@ import { pathToFileURL } from 'node:url';
 const project = resolve(import.meta.dirname, '..');
 const source = join(project, 'game');
 const output = join(project, 'native', 'engine', 'android', 'app', 'src', 'main', 'assets', 'mistbound');
+const cheatsEnabled = !process.argv.includes('--disable-cheats');
 await import(pathToFileURL(join(source, 'scripts', 'embed-audio.mjs')).href);
 const viteModule = pathToFileURL(join(source, 'node_modules', 'vite', 'dist', 'node', 'index.js')).href;
 const { build } = await import(viteModule);
@@ -12,7 +13,7 @@ const { build } = await import(viteModule);
 await build({
   root: source,
   base: './',
-  define: { __MISTBOUND_CHEATS_ENABLED__: 'false' },
+  define: { __MISTBOUND_CHEATS_ENABLED__: JSON.stringify(cheatsEnabled) },
   build: {
     target: ['es2017', 'chrome61'],
     cssTarget: ['chrome61', 'safari18.4'],
@@ -45,3 +46,4 @@ for (const filename of await readdir(join(output, 'assets'))) {
 }
 
 console.log(`Original game packaged for Android WebView: ${output}`);
+console.log(`Cheat panel: ${cheatsEnabled ? 'enabled' : 'disabled'}`);

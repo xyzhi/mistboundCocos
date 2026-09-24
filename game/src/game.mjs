@@ -26,6 +26,34 @@ export const DIFFICULTIES = {
   standard: { name: '标准', hint: '敌人攻势更明确，久战时伤害会快速提高；16% 伤害穿透护盾。', hp: 1.45, damage: 1.98, hpDepth: .03, damageDepth: .038, turnDamage: .22, guardPierce: .16, recovery: .4, levelHeal: 2, reward: 1.2 },
   challenge: { name: '挑战', hint: '敌人伤害高且久战惩罚更重，25% 伤害穿透护盾，需要手动出牌与装备成长。', hp: 1.7, damage: 2.18, hpDepth: .04, damageDepth: .047, turnDamage: .3, guardPierce: .25, recovery: 0, levelHeal: 0, reward: 1.45 },
 };
+export const ELEMENTS = {
+  fire: { name: '火', icon: '🔥' },
+  water: { name: '水', icon: '💧' },
+  wind: { name: '风', icon: '🌪' },
+  earth: { name: '土', icon: '🪨' },
+  neutral: { name: '无', icon: '◇' },
+};
+export const ELEMENT_ADVANTAGE = { fire: 'wind', wind: 'earth', earth: 'water', water: 'fire' };
+export const MAX_BATTLE_ENEMIES = 4;
+const ENEMY_ELEMENT_CYCLE = ['earth', 'water', 'wind', 'fire'];
+export const ENEMY_SUMMONS = {
+  ember: {
+    name: '余烬火种', title: '召唤物 · 两回合后爆裂', kind: 'summon', element: 'fire', art: 5, hp: 14,
+    pattern: [{ kind: 'charge', value: 5 }, { kind: 'attack', value: 8 }],
+  },
+  tide: {
+    name: '潮汐水灵', title: '召唤物 · 为同伴续命', kind: 'summon', element: 'water', art: 9, hp: 16,
+    pattern: [{ kind: 'healAlly', value: 5 }, { kind: 'attack', value: 4 }],
+  },
+  gust: {
+    name: '碎风灵', title: '召唤物 · 多段骚扰', kind: 'summon', element: 'wind', art: 2, hp: 13,
+    pattern: [{ kind: 'attack', value: 2, hits: 2 }, { kind: 'attack', value: 3, hits: 2 }],
+  },
+  stone: {
+    name: '守夜石偶', title: '召唤物 · 为敌方提供掩护', kind: 'summon', element: 'earth', art: 1, hp: 20,
+    pattern: [{ kind: 'guardAll', value: 4 }, { kind: 'attack', value: 5 }],
+  },
+};
 export const CARDS = {
   slash: { name: '轻声问候', school: '倾听', type: 'attack', cost: 1, damage: 7, icon: 'heart', flavor: '一句问候，是故事愿意开始的地方。' },
   guard: { name: '深呼吸', school: '陪伴', type: 'skill', cost: 1, block: 6, icon: 'wind', flavor: '先让呼吸慢下来。' },
@@ -69,6 +97,10 @@ export const CARDS = {
   keepTheLight: { name: '灯一直亮', school: '陪伴', type: 'skill', cost: 2, block: 75, nextBlock: 41, retain: true, icon: 'flame', art: 'kitchenLight', flavor: '只要灯还亮着，终点就不会太远。' },
   homeboundMail: { name: '归途来信', school: '书信', type: 'attack', cost: 1, damage: 61, recycle: 2, icon: 'wind', art: 'unsent', flavor: '信里没有地址，因为收信人已经在回家的路上。' },
   doubt: { name: '杂念', school: '失序', type: 'spell', cost: 1, self: 2, exhaust: true, icon: 'moon', art: 'risk', flavor: '越想甩开，越会缠住脚步。' },
+  emberSweep: { name: '余烬横扫', school: '清醒梦', type: 'attack', cost: 2, damage: 8, element: 'fire', target: 'allEnemies', icon: 'flame', art: 'nova', flavor: '火光不问名字，只沿着梦的边缘扫过去。' },
+  tidalEcho: { name: '潮汐回声', school: '料理', type: 'attack', cost: 2, damage: 6, block: 5, dualStat: true, element: 'water', target: 'allEnemies', icon: 'heart', art: 'tea', flavor: '潮声同时拍上每一扇没有关紧的门。' },
+  galeNeedle: { name: '风针连落', school: '书信', type: 'attack', cost: 1, damage: 4, hits: 3, element: 'wind', target: 'randomEnemy', icon: 'wind', art: 'quick', flavor: '三封没有地址的信，被风分别送往不同方向。' },
+  stoneBreaker: { name: '岩脊重击', school: '陪伴', type: 'attack', cost: 1, damage: 9, block: 4, dualStat: true, element: 'earth', target: 'singleEnemy', icon: 'shield', art: 'riposte', flavor: '站稳以后，再把这一步还给梦。' },
 };
 export const ENEMIES = [
   { name: '不肯告别的园丁', title: '花田梦境 · 未完成的告别', place: '花田终点站', art: 1, hp: 34, pattern: [{ kind: 'attack', value: 6 }, { kind: 'guard', value: 7 }, { kind: 'attack', value: 9 }] },
@@ -234,7 +266,7 @@ export const CHECKPOINTS = {
 };
 export const SEGMENT_NAMES = ['入梦浅滩', '回声小径', '失序深处', '梦核外环', '终夜核心'];
 export const STARTER = ['slash', 'slash', 'slash', 'slash', 'guard', 'guard', 'guard', 'mark', 'heavy', 'focus'];
-export const REWARDS = ['riposte', 'leech', 'quick', 'fortify', 'steadyTea', 'openingNote', 'nova', 'tea', 'listen', 'nightRide', 'rainPromise', 'sharedUmbrella', 'echo', 'postcard', 'photoAlbum', 'unsent', 'returnedLetter', 'pageMarker', 'risk', 'kitchenLight', 'stayAwhile', 'lucidDoor', 'tideTurn', 'warmThermos', 'mend', 'blanket', 'morningCall', 'goodnight', 'exposeTruth', 'nightWatch', 'finalPlatform', 'rewriteEnding', 'lastWarmth', 'silentAnswer', 'keepTheLight', 'homeboundMail'];
+export const REWARDS = ['riposte', 'leech', 'quick', 'fortify', 'mend', 'openingNote', 'emberSweep', 'tidalEcho', 'galeNeedle', 'stoneBreaker', 'nova', 'tea', 'listen', 'nightRide', 'rainPromise', 'sharedUmbrella', 'echo', 'postcard', 'photoAlbum', 'unsent', 'returnedLetter', 'pageMarker', 'risk', 'kitchenLight', 'stayAwhile', 'lucidDoor', 'tideTurn', 'warmThermos', 'steadyTea', 'blanket', 'morningCall', 'goodnight', 'exposeTruth', 'nightWatch', 'finalPlatform', 'rewriteEnding', 'lastWarmth', 'silentAnswer', 'keepTheLight', 'homeboundMail'];
 export const CORE_REWARDS = { uncle: 'mark', gaigai: 'mend', xiaoshuai: 'fortify' };
 export const MYSTERY_STATIONS = [
   { type: 'event', label: '沿途事件', weight: 22 },
@@ -610,6 +642,7 @@ export const ITEM_TIERS = [
 ];
 export const SKILL_UNLOCKS = {
   riposte: 0, leech: 0, quick: 0, fortify: 0, mend: 0, openingNote: 0,
+  emberSweep: 0, tidalEcho: 0, galeNeedle: 0, stoneBreaker: 0,
   nova: 1, tea: 1, listen: 1, nightRide: 1, rainPromise: 1, sharedUmbrella: 1,
   echo: 2, postcard: 2, photoAlbum: 2, unsent: 2, returnedLetter: 2, pageMarker: 2,
   risk: 3, kitchenLight: 3, stayAwhile: 3, lucidDoor: 3, tideTurn: 3, warmThermos: 3,
@@ -1060,6 +1093,11 @@ export function card(key) {
   const base = CARDS[baseKey];
   if (!base) throw new Error('Unknown card');
   const c = { ...base, key, baseKey, rank, upgraded, equipmentGranted };
+  // Existing cards stay neutral in this first migration so their established
+  // balance does not change overnight. New/retuned cards opt into an element
+  // explicitly; the remaining catalogue can be migrated deliberately later.
+  c.element ||= 'neutral';
+  c.target ||= (c.damage || c.mark || c.markBurst || c.consumeMark) ? 'singleEnemy' : 'self';
   if (equipmentGranted) c.cost = 0;
   if (rank > 1) {
     const multiplier = 1 + (rank - 1) * CARD_RANK_GROWTH;
@@ -1076,6 +1114,18 @@ export function card(key) {
   }
   if (baseKey === 'openingNote') c.mark = 1;
   return c;
+}
+export function cardTarget(keyOrCard) {
+  const c = typeof keyOrCard === 'string' ? card(keyOrCard) : keyOrCard;
+  return c?.target || ((c?.damage || c?.mark || c?.markBurst || c?.consumeMark) ? 'singleEnemy' : 'self');
+}
+export function elementMultiplier(attackerElement, defenderElement) {
+  if (!attackerElement || !defenderElement || attackerElement === 'neutral' || defenderElement === 'neutral') return 1;
+  return ELEMENT_ADVANTAGE[attackerElement] === defenderElement ? 1.25 : 1;
+}
+export function elementLabel(element) {
+  const model = ELEMENTS[element] || ELEMENTS.neutral;
+  return model.icon + ' ' + model.name;
 }
 export function description(key) {
   const c = card(key), parts = [];
@@ -1096,6 +1146,8 @@ export function description(key) {
   if (c.cleanse) parts.push('解除治疗压制与动摇');
   if (c.retain) parts.push('回合结束时仍留在手牌');
   if (c.exhaust) parts.push('打出后移出本场战斗');
+  if (c.target === 'allEnemies') parts.push('作用于所有敌人');
+  if (c.target === 'randomEnemy') parts.push('随机选择敌人');
   return parts;
 }
 function random(s) {
@@ -1117,11 +1169,15 @@ function log(s, text) {
   }
 }
 function logBattleStatus(s) {
-  const foe = enemyFor(s);
   const playerGuard = s.block > 0 ? ` · 护盾 ${s.block}` : '';
   const warmth = s.character === 'gaigai' && s.warmth > 0 ? ` · 暖意 ${s.warmth}` : '';
-  const enemyGuard = s.enemy.block > 0 ? ` · 护盾 ${s.enemy.block}` : '';
-  log(s, `状态：你 ${s.hp}/${s.maxHp} 生命${playerGuard}${warmth}｜${foe.name} ${s.enemy.hp}/${s.enemy.maxHp} 生命${enemyGuard}`);
+  const enemies = livingEnemies(s);
+  const enemyText = enemies.map(unit => {
+    const foe = enemyFor(s, unit.id);
+    const guard = unit.block > 0 ? ' · 护盾 ' + unit.block : '';
+    return foe.name + ' ' + unit.hp + '/' + unit.maxHp + ' 生命' + guard;
+  }).join('｜');
+  log(s, '状态：你 ' + s.hp + '/' + s.maxHp + ' 生命' + playerGuard + warmth + (enemyText ? '｜' + enemyText : ''));
 }
 function draw(s, count) {
   for (let i = 0; i < count && s.hand.length < 9; i++) {
@@ -1153,7 +1209,9 @@ export function enemyInitialDamageMultiplier(s) {
   const current = rawInitialDamageMultiplier(s, difficulty);
   if (s.bossFight || s.stage <= 0) return current;
   const previousStage = s.stage - 1;
-  const currentEnemy = enemyFor(s);
+  // Balance-boundary calculations must use the requested encounter template,
+  // not whichever runtime unit happens to be selected in a multi-enemy fight.
+  const currentEnemy = baseEnemyFor(s, s.foe || 0, false);
   const benchmarkPressure = s.elite
     ? enemyInitialDamageMultiplier({ ...s, stage: previousStage, mapRow: MAP_STEPS - 1, foe: 0, elite: false, bossFight: true }) * peakBasePressure(ENEMIES[previousStage])
     : Math.max(...ENCOUNTERS[previousStage]
@@ -1166,58 +1224,208 @@ export function enemyInitialDamageMultiplier(s) {
   const boundary = benchmarkPressure * boundaryFactor / peakBasePressure(currentEnemy);
   return Math.max(current, boundary);
 }
-export function intent(s) {
-  const enemy = enemyFor(s);
+function baseEnemyFor(s, foe = s?.foe || 0, bossFight = Boolean(s?.bossFight)) {
+  if (!s) return ENEMIES[0];
+  if (bossFight) return ENEMIES[s.stage] || ENEMIES[0];
+  const encounter = ENCOUNTERS[s.stage]?.[foe] || ENCOUNTERS[s.stage]?.[0] || ENCOUNTERS[0][0];
+  return { ...encounter, place: ENEMIES[s.stage]?.place || ENEMIES[0].place };
+}
+function enemyElement(template, stage = 0, foe = 0) {
+  if (template?.element) return template.element;
+  const seed = Number.isInteger(template?.art) ? template.art : stage + foe;
+  return ENEMY_ELEMENT_CYCLE[Math.abs(seed) % ENEMY_ELEMENT_CYCLE.length];
+}
+function battleEnemyById(s, id) {
+  if (!Array.isArray(s?.enemies)) return null;
+  return s.enemies.find(unit => unit.id === id) || null;
+}
+export function livingEnemies(s) {
+  if (Array.isArray(s?.enemies)) return s.enemies.filter(unit => unit && unit.alive !== false && unit.hp > 0);
+  return s?.enemy?.hp > 0 ? [s.enemy] : [];
+}
+function syncSelectedEnemy(s, targetId = s?.selectedEnemyId) {
+  if (!Array.isArray(s?.enemies) || !s.enemies.length) return s?.enemy || null;
+  let target = battleEnemyById(s, targetId);
+  if (!target || target.alive === false || target.hp <= 0) target = livingEnemies(s)[0] || s.enemies[0];
+  if (target) {
+    s.selectedEnemyId = target.id;
+    s.enemy = target;
+  }
+  return target || null;
+}
+function syncPlayerUnit(s) {
+  if (!Array.isArray(s.allies) || !s.allies.length) {
+    s.allies = [{ id: 'player', side: 'ally', kind: 'hero', character: s.character, element: 'neutral', hp: s.hp, maxHp: s.maxHp, block: s.block, alive: s.hp > 0 }];
+  }
+  const player = s.allies[0];
+  player.character = s.character;
+  player.hp = s.hp;
+  player.maxHp = s.maxHp;
+  player.block = s.block;
+  player.alive = s.hp > 0;
+}
+export function enemyFor(s, targetId = null) {
+  if (!s) return ENEMIES[0];
+  const unit = battleEnemyById(s, targetId || s.selectedEnemyId);
+  if (unit?.summonKey) return { ...ENEMY_SUMMONS[unit.summonKey], place: ENEMIES[s.stage]?.place || ENEMIES[0].place };
+  if (unit) return baseEnemyFor(s, unit.foe, unit.kind === 'boss');
+  return baseEnemyFor(s);
+}
+export function enemyMaxHp(s, foeOverride = s?.foe || 0, bossOverride = Boolean(s?.bossFight)) {
+  const difficulty = DIFFICULTIES[s.difficulty] || DIFFICULTIES.standard;
+  const chapterScale = CHAPTER_HP_SCALES[s.stage] || 1;
+  const depthScale = chapterScale * (1 + Math.max(0, s.mapRow) * difficulty.hpDepth);
+  const rankScale = bossOverride
+    ? bossHpScale(s.stage)
+    : s.elite ? (s.stage === 0 ? (s.difficulty === 'challenge' ? 1.875 : 1.5) : 1.3) : 1;
+  const rawMaxHp = Math.round(baseEnemyFor(s, foeOverride, bossOverride).hp * depthScale * rankScale * difficulty.hp);
+  if (bossOverride || s.stage <= 0) return rawMaxHp;
+  const previousStage = s.stage - 1;
+  const benchmarkHp = s.elite
+    ? enemyMaxHp({ ...s, stage: previousStage, mapRow: MAP_STEPS - 1, foe: 0, elite: false, bossFight: true }, 0, true)
+    : Math.max(...ENCOUNTERS[previousStage]
+      .map((enemy, foe) => ({ enemy, foe }))
+      .filter(({ enemy }) => !enemy.eliteOnly)
+      .map(({ foe }) => enemyMaxHp({ ...s, stage: previousStage, mapRow: MAP_STEPS - 1, foe, elite: false, bossFight: false }, foe, false)));
+  const boundaryFactor = s.elite
+    ? ELITE_CHAPTER_HP_BOUNDARY_SCALES[s.stage]
+    : NORMAL_CHAPTER_HP_BOUNDARY_SCALES[s.stage];
+  return Math.max(rawMaxHp, Math.round(benchmarkHp * boundaryFactor));
+}
+function makeEnemyUnit(s, template, options = {}) {
+  const foe = Number.isInteger(options.foe) ? options.foe : s.foe;
+  const boss = Boolean(options.boss);
+  const maxHp = options.maxHp || (options.summonKey
+    ? Math.max(1, Math.round(template.hp * (1 + s.stage * .18) * (DIFFICULTIES[s.difficulty]?.hp || 1)))
+    : enemyMaxHp({ ...s, enemies: undefined, enemy: undefined, foe, bossFight: boss }, foe, boss));
+  return {
+    id: options.id || 'enemy-' + s.stage + '-' + foe + '-' + (options.slot || 0),
+    side: 'enemy',
+    kind: options.summonKey ? 'summon' : boss ? 'boss' : 'enemy',
+    foe,
+    summonKey: options.summonKey || null,
+    slot: options.slot || 0,
+    element: enemyElement(template, s.stage, foe),
+    hp: maxHp,
+    maxHp,
+    block: 0,
+    mark: 0,
+    charge: 0,
+    alive: true,
+    summonedOnTurn: options.summonedOnTurn || 0,
+    pressureScale: options.pressureScale ?? (options.summonKey ? .35 : 1),
+  };
+}
+function desiredEnemyCount(s) {
+  if (s.bossFight) return 1;
+  if (s.elite) return Math.min(3, 2 + (Math.max(0, s.mapRow) >= 30 ? 1 : 0));
+  if (Math.max(0, s.mapRow) < 4) return 1;
+  return 1 + ((Math.max(0, s.mapRow) + (s.foe || 0) + (s.stage || 0)) % 3);
+}
+function buildEnemyParty(s) {
+  const count = Math.min(MAX_BATTLE_ENEMIES, desiredEnemyCount(s));
+  if (s.bossFight) {
+    const template = baseEnemyFor(s, 0, true);
+    return [makeEnemyUnit(s, template, { id: 'boss-' + s.stage, boss: true, foe: 0, slot: 1 })];
+  }
+  const pool = ENCOUNTERS[s.stage] || ENCOUNTERS[0];
+  const validIndexes = pool.map((enemy, index) => ({ enemy, index }))
+    .filter(({ enemy }) => Boolean(enemy.eliteOnly) === Boolean(s.elite))
+    .map(({ index }) => index);
+  const fallback = validIndexes.length ? validIndexes : pool.map((_, index) => index);
+  const start = Math.max(0, fallback.indexOf(s.foe));
+  const units = [];
+  for (let offset = 0; offset < count; offset++) {
+    const foe = fallback[(start + offset) % fallback.length];
+    const template = baseEnemyFor(s, foe, false);
+    units.push(makeEnemyUnit(s, template, { id: 'enemy-' + s.stage + '-' + s.mapRow + '-' + foe + '-' + offset, foe, slot: offset }));
+  }
+  const hpScale = count <= 1 ? 1 : count === 2 ? .72 : count === 3 ? .56 : .48;
+  const pressureScale = count <= 1 ? 1 : count === 2 ? .62 : count === 3 ? .43 : .34;
+  for (const unit of units) {
+    unit.maxHp = Math.max(1, Math.round(unit.maxHp * hpScale));
+    unit.hp = unit.maxHp;
+    unit.pressureScale = pressureScale;
+  }
+  return units;
+}
+function summonKeyForElement(element) {
+  return ({ fire: 'ember', water: 'tide', wind: 'gust', earth: 'stone' })[element] || 'ember';
+}
+function addEnemySummon(s, summonKey, count = 1, summonerId = null) {
+  const template = ENEMY_SUMMONS[summonKey];
+  if (!template) return [];
+  const added = [];
+  for (let index = 0; index < count && livingEnemies(s).length < MAX_BATTLE_ENEMIES; index++) {
+    const occupied = new Set(livingEnemies(s).map(unit => unit.slot));
+    let slot = 0;
+    while (occupied.has(slot) && slot < MAX_BATTLE_ENEMIES) slot++;
+    const id = 'summon-' + summonKey + '-' + s.turn + '-' + s.played + '-' + slot + '-' + index;
+    const unit = makeEnemyUnit(s, template, { id, summonKey, slot, summonedOnTurn: s.turn });
+    unit.summonerId = summonerId;
+    s.enemies.push(unit);
+    added.push(unit);
+  }
+  return added;
+}
+function enemyPressureScale(s, unit) {
+  if (unit?.kind === 'boss') return 1;
+  return Number.isFinite(unit?.pressureScale) ? unit.pressureScale : 1;
+}
+function cardTargets(s, c, targetId = null) {
+  const alive = livingEnemies(s);
+  const targetType = cardTarget(c);
+  if (!alive.length || targetType === 'self') return [];
+  if (targetType === 'allEnemies') return alive;
+  if (targetType === 'randomEnemy') return [alive[Math.floor(random(s) * alive.length)]];
+  const selected = battleEnemyById(s, targetId || s.selectedEnemyId);
+  return [selected && selected.hp > 0 && selected.alive !== false ? selected : alive[0]];
+}
+export function cardTargetIds(s, key) {
+  const c = card(key);
+  const alive = livingEnemies(s);
+  if (cardTarget(c) === 'allEnemies') return alive.map(unit => unit.id);
+  if (cardTarget(c) === 'self') return [];
+  return alive.map(unit => unit.id);
+}
+export function intent(s, targetId = null) {
+  const unit = battleEnemyById(s, targetId || s?.selectedEnemyId) || livingEnemies(s)[0] || s?.enemy;
+  const legacySingle = !targetId && Array.isArray(s?.enemies) && s.enemies.length === 1 && unit?.kind !== 'summon';
+  const effectiveKind = legacySingle ? (s.bossFight ? 'boss' : 'enemy') : unit?.kind;
+  const effectiveFoe = legacySingle ? (s.foe || 0) : (unit?.foe ?? s.foe);
+  const enemy = legacySingle ? baseEnemyFor(s, effectiveFoe, effectiveKind === 'boss') : enemyFor(s, unit?.id);
   const base = enemy.pattern[(s.turn - 1) % enemy.pattern.length];
   const difficulty = DIFFICULTIES[s.difficulty] || DIFFICULTIES.standard;
-  const initialMultiplier = enemyInitialDamageMultiplier(s);
+  const multiplierState = effectiveKind === 'boss'
+    ? { ...s, enemies: undefined, enemy: undefined, foe: 0, bossFight: true }
+    : { ...s, enemies: undefined, enemy: undefined, foe: effectiveFoe, bossFight: false };
+  const initialMultiplier = enemyInitialDamageMultiplier(multiplierState);
   const turnGrowth = difficulty.turnDamage + MID_LATE_TURN_DAMAGE_BONUS[s.stage];
   const multiplier = initialMultiplier + Math.max(0, s.turn - 1) * turnGrowth * difficulty.damage;
   const offensive = ['attack', 'curse', 'dispel', 'charge'].includes(base.kind);
-  const defensive = ['guard', 'heal'].includes(base.kind);
+  const defensive = ['guard', 'heal', 'healAlly', 'guardAll'].includes(base.kind);
+  const pressureScale = enemyPressureScale(s, unit);
   const value = offensive
-    ? Math.max(1, Math.round(base.value * multiplier))
+    ? Math.max(1, Math.round(base.value * multiplier * pressureScale))
     : defensive ? Math.max(1, Math.round(base.value * initialMultiplier)) : base.value;
-  const pressureValue = Math.max(1, Math.round(base.value * multiplier));
-  if (s.enemy?.charge) return { kind: 'chargedAttack', value: s.enemy.charge };
-  if (s.bossFight && s.stage === ENEMIES.length - 1) {
+  const pressureValue = Math.max(1, Math.round(base.value * multiplier * pressureScale));
+  const charge = legacySingle ? s.enemy?.charge : unit?.charge;
+  if (charge) return { kind: 'chargedAttack', value: charge };
+  if (effectiveKind === 'boss' && livingEnemies(s).length < MAX_BATTLE_ENEMIES && s.turn > 1 && s.turn % 3 === 2) {
+    return { kind: 'summon', summon: summonKeyForElement(unit.element), count: 1 };
+  }
+  if (effectiveKind === 'boss' && s.stage === ENEMIES.length - 1) {
     if (s.turn % 2 === 1) return { ...base, value };
     if (s.turn % 4 === 0) return { kind: 'charge', value: Math.max(1, Math.round(pressureValue * 1.8)) };
     if (s.turn % 6 === 0) return { kind: 'suppress', value: 2 };
     return { kind: 'dispel', value: Math.max(1, Math.round(pressureValue * .7)) };
   }
+  if (effectiveKind === 'summon') return { ...base, value };
   if (s.stage >= 4 && s.turn % 5 === 0) return { kind: 'jam', value: 2 };
   if (s.stage >= 3 && s.turn % 4 === 3) return { kind: 'suppress', value: 2 };
   if (s.stage >= 2 && s.turn % 4 === 2) return { kind: 'dispel', value: Math.max(1, Math.round(pressureValue * .7)) };
   if (s.stage >= 1 && s.turn % 4 === 0) return { kind: 'charge', value: Math.max(1, Math.round(pressureValue * 1.8)) };
   return { ...base, value };
-}
-export function enemyFor(s) {
-  if (!s) return ENEMIES[0];
-  if (s.bossFight) return ENEMIES[s.stage];
-  const encounter = ENCOUNTERS[s.stage]?.[s.foe] || ENCOUNTERS[s.stage]?.[0];
-  return { ...encounter, place: ENEMIES[s.stage].place };
-}
-export function enemyMaxHp(s) {
-  const difficulty = DIFFICULTIES[s.difficulty] || DIFFICULTIES.standard;
-  const chapterScale = CHAPTER_HP_SCALES[s.stage] || 1;
-  const depthScale = chapterScale * (1 + Math.max(0, s.mapRow) * difficulty.hpDepth);
-  const rankScale = s.bossFight
-    ? bossHpScale(s.stage)
-    : s.elite ? (s.stage === 0 ? (s.difficulty === 'challenge' ? 1.875 : 1.5) : 1.3) : 1;
-  const rawMaxHp = Math.round(enemyFor(s).hp * depthScale * rankScale * difficulty.hp);
-  if (s.bossFight || s.stage <= 0) return rawMaxHp;
-  const previousStage = s.stage - 1;
-  const benchmarkHp = s.elite
-    ? enemyMaxHp({ ...s, stage: previousStage, mapRow: MAP_STEPS - 1, foe: 0, elite: false, bossFight: true })
-    : Math.max(...ENCOUNTERS[previousStage]
-      .map((enemy, foe) => ({ enemy, foe }))
-      .filter(({ enemy }) => !enemy.eliteOnly)
-      .map(({ foe }) => enemyMaxHp({ ...s, stage: previousStage, mapRow: MAP_STEPS - 1, foe, elite: false, bossFight: false })));
-  const boundaryFactor = s.elite
-    ? ELITE_CHAPTER_HP_BOUNDARY_SCALES[s.stage]
-    : NORMAL_CHAPTER_HP_BOUNDARY_SCALES[s.stage];
-  return Math.max(rawMaxHp, Math.round(benchmarkHp * boundaryFactor));
 }
 function cardMode(c) {
   if (c.heal && !c.damage) return 'heal';
@@ -1233,17 +1441,23 @@ function cardCombatContext(s, c) {
   const alternating = Boolean((mode === 'attack' && s.lastCardMode === 'heal') || (mode === 'heal' && s.lastCardMode === 'attack'));
   return { bonuses, stats, sameSchool, chain, mode, alternating };
 }
-function cardMarkGain(s, c) {
+function cardMarkGain(s, c, target = s.enemy) {
   const baseMarkGain = c.mark || 0;
-  if (!baseMarkGain || !c.markedMarkBonusPct || (s.enemy?.mark || 0) <= 0) return baseMarkGain;
+  if (!baseMarkGain || !c.markedMarkBonusPct || (target?.mark || 0) <= 0) return baseMarkGain;
   return baseMarkGain + Math.ceil(baseMarkGain * c.markedMarkBonusPct);
 }
-export function attackBreakdown(s, key) {
+export function attackBreakdown(s, key, targetId = null) {
   const c = card(key);
+  const selectedUnit = battleEnemyById(s, targetId || s?.selectedEnemyId) || livingEnemies(s)[0];
+  const legacyTarget = targetId ? null : s.enemy;
+  const target = legacyTarget || selectedUnit;
+  if (target && !target.element) {
+    target.element = selectedUnit?.element || enemyElement(baseEnemyFor(s), s.stage, s.foe || 0);
+  }
   const context = cardCombatContext(s, c);
   const { bonuses, stats } = context;
-  const existingMarks = s.enemy.mark || 0;
-  const baseMarkGain = cardMarkGain(s, c);
+  const existingMarks = target?.mark || 0;
+  const baseMarkGain = cardMarkGain(s, c, target);
   const marksBeforeAttack = existingMarks + baseMarkGain;
   const gainedBlock = c.block ? c.block + stats.skillPower + (context.sameSchool ? bonuses.chainBlock || 0 : 0) : 0;
   const playerBlock = (s.block || 0) + gainedBlock;
@@ -1253,25 +1467,27 @@ export function attackBreakdown(s, key) {
   if (!c.damage) {
     const standaloneBase = (c.markBurst ? existingMarks * c.markBurst : 0) + (c.consumeMark ? marksBeforeAttack * c.consumeMark : 0);
     const standaloneSpecial = Math.round(standaloneBase * (1 + (bonuses.markSpecialPct || 0)));
-    return { total: standaloneSpecial, normal: 0, weakpoint: standaloneSpecial, enemyBlock: s.enemy.block, marksAfter: c.consumeMark ? 0 : marksBeforeAttack, gainedBlock, playerBlockAfter: playerBlock, warmthSpent: 0, warmthDamage: 0, context };
+    return { total: standaloneSpecial, normal: 0, weakpoint: standaloneSpecial, enemyBlock: target?.block || 0, marksAfter: c.consumeMark ? 0 : marksBeforeAttack, gainedBlock, playerBlockAfter: playerBlock, warmthSpent: 0, warmthDamage: 0, context, targetId: target?.id || null, elementMultiplier: 1 };
   }
-  const execute = c.execute && s.enemy.hp <= s.enemy.maxHp / 2 ? c.execute : 1;
+  const execute = c.execute && target?.hp <= target?.maxHp / 2 ? c.execute : 1;
   let damageMultiplier = execute;
   if (c.school === '书信') damageMultiplier *= 1 + (bonuses.letterDamagePct || 0) + (c.retain ? bonuses.retainedLetterDamagePct || 0 : 0);
   if (c.recycle) damageMultiplier *= 1 + (bonuses.recycleDamagePct || 0);
   if (context.sameSchool) damageMultiplier *= 1 + (bonuses.chainDamagePct || 0) + Math.max(0, context.chain - 1) * (bonuses.chainDepthPct || 0);
   if (context.alternating && context.mode === 'attack') damageMultiplier *= 1 + (bonuses.rhythmDamagePct || 0);
   if (s.hp <= s.maxHp / 2) damageMultiplier *= 1 + (bonuses.lowHealthDamagePct || 0);
-  if ((s.enemy.mark || 0) > 0) damageMultiplier *= 1 + (bonuses.markedDamagePct || 0);
+  if ((target?.mark || 0) > 0) damageMultiplier *= 1 + (bonuses.markedDamagePct || 0);
   if (bonuses.followMastery && context.sameSchool && context.chain % 3 === 0) damageMultiplier *= 1.5;
-  const conditionalFlat = ((s.enemy.mark || 0) > 0 ? stats.markedStrike : 0)
+  const elemental = elementMultiplier(c.element, target?.element);
+  damageMultiplier *= elemental;
+  const conditionalFlat = ((target?.mark || 0) > 0 ? stats.markedStrike : 0)
     + (context.alternating ? stats.rhythmPower + (bonuses.rhythmFlatDamage || 0) : 0)
     + (playerBlock > 0 ? bonuses.guardedFlatDamage || 0 : 0)
     + (s.lucidCharge || 0);
   const baseDamage = Math.round((c.damage + stats.attack + conditionalFlat + (s.played === 0 ? stats.firstStrike + (s.sideBattleFirstStrike || 0) : 0)) * damageMultiplier);
   const base = s.weak > 0 ? Math.floor(baseDamage * .75) : baseDamage;
   const hits = c.hits || 1;
-  let block = s.enemy.block;
+  let block = target?.block || 0;
   let normal = 0;
   let weakpoint = 0;
   const availableMarks = c.consumeMark ? 0 : marksBeforeAttack;
@@ -1293,9 +1509,9 @@ export function attackBreakdown(s, key) {
   const specialDamage = blockDamage + markSpecialDamage + tideDamage;
   const marksAfter = c.consumeMark || insightDetonate ? 0 : remainingMarks;
   const tideReserve = blockDamage > 0 ? Math.floor(blockDamage * (bonuses.tideNextBlockPct || 0)) : 0;
-  return { total: normal + weakpoint + specialDamage, normal: normal + blockDamage + tideDamage, weakpoint: weakpoint + markSpecialDamage, enemyBlock: block, marksAfter, gainedBlock, playerBlockAfter: Math.max(0, playerBlock - shieldSpent), shieldSpent, warmthSpent, warmthDamage, tideReserve, insightDetonate, context };
+  return { total: normal + weakpoint + specialDamage, normal: normal + blockDamage + tideDamage, weakpoint: weakpoint + markSpecialDamage, enemyBlock: block, marksAfter, gainedBlock, playerBlockAfter: Math.max(0, playerBlock - shieldSpent), shieldSpent, warmthSpent, warmthDamage, tideReserve, insightDetonate, context, targetId: target?.id || null, elementMultiplier: elemental };
 }
-export function attackPreview(s, key) { return attackBreakdown(s, key).total; }
+export function attackPreview(s, key, targetId = null) { return attackBreakdown(s, key, targetId).total; }
 export function equipmentStats(s) {
   const equipped = s?.equipment || {};
   return Object.values(equipped).reduce((total, id) => {
@@ -1644,16 +1860,18 @@ export function beginBattle(s) {
     log(s, '夜路承诺留下的祝福在梦境入口亮了一下。');
   }
   s.sideBuffs = (s.sideBuffs || []).filter(buff => buff.battles > 0);
-  const difficulty = DIFFICULTIES[s.difficulty] || DIFFICULTIES.standard;
-  const foe = enemyFor(s);
-  const maxHp = enemyMaxHp(s);
-  s.enemy = { hp: maxHp, maxHp, block: 0, mark: 0, charge: 0 };
+  s.enemies = buildEnemyParty(s);
+  s.selectedEnemyId = s.enemies[0]?.id || null;
+  syncSelectedEnemy(s);
+  syncPlayerUnit(s);
   s.nextBlock = 0; s.healingSuppression = 0;
   const grantedCards = Object.values(s.equipment).map(id => itemFor(s, id)).filter(item => item?.skill).map(item => rankedCardKey(item.skill, item.skillLevel || 1, true));
   s.draw = shuffle(s, [...s.deck, ...grantedCards]); s.hand = []; s.discard = []; s.exhaust = [];
   s.choices = [];
   draw(s, 5);
-  log(s, `抵达${foe.place}，遭遇${foe.name}。`);
+  const enemyNames = livingEnemies(s).map(unit => enemyFor(s, unit.id).name).join('、');
+  const place = enemyFor(s, s.selectedEnemyId)?.place || ENEMIES[s.stage]?.place || '梦境';
+  log(s, `抵达${place}，遭遇${enemyNames}。`);
   log(s, `第 1 回合开始，能量为 ${s.energy}。`);
   logBattleStatus(s);
 }
@@ -1670,7 +1888,10 @@ export function newRun(seed = Date.now() >>> 0, battleMode = 'manual', difficult
   s.hp = startingHp; s.maxHp = startingHp;
   s.turn = 1; s.energy = 3; s.block = 0; s.nextBlock = 0; s.weak = 0; s.healingSuppression = 0;
   s.lastCardSchool = null; s.lastCardMode = null; s.schoolChain = 0; s.rhythmTriggers = 0; s.recycleTriggered = false; s.healDrawTriggered = false; s.lucidFocusTriggered = false; s.lucidCharge = 0; s.counterTriggers = 0;
-  s.enemy = { hp: 0, maxHp: 0, block: 0, mark: 0, charge: 0 };
+  s.allies = [{ id: 'player', side: 'ally', kind: 'hero', character: selectedCharacter, element: 'neutral', hp: startingHp, maxHp: startingHp, block: 0, alive: true }];
+  s.enemies = [];
+  s.selectedEnemyId = null;
+  s.enemy = { hp: 0, maxHp: 0, block: 0, mark: 0, charge: 0, element: 'neutral' };
   s.draw = []; s.hand = []; s.discard = []; s.exhaust = []; s.choices = [];
   log(s, '房车在花田边停稳，第一盏夜灯已经亮起。');
   return s;
@@ -1678,8 +1899,11 @@ export function newRun(seed = Date.now() >>> 0, battleMode = 'manual', difficult
 
 export function chooseAutoCard(s) {
   if (!s || s.phase !== 'combat') return -1;
-  const move = intent(s);
-  const incoming = ['attack', 'curse', 'chargedAttack', 'dispel'].includes(move.kind) ? move.value * (move.hits || 1) : 0;
+  const enemies = livingEnemies(s);
+  const incoming = enemies.reduce((sum, unit) => {
+    const move = intent(s, unit.id);
+    return sum + (['attack', 'curse', 'chargedAttack', 'dispel'].includes(move.kind) ? move.value * (move.hits || 1) : 0);
+  }, 0);
   const missingHp = Math.max(0, s.maxHp - s.hp);
   const stats = equipmentStats(s);
   const bonuses = specializationBonuses(s);
@@ -1689,7 +1913,13 @@ export function chooseAutoCard(s) {
     const markLayers = cardMarkGain(s, c);
     const traitDraw = markLayers && s.character === 'uncle' && !s.traitUsed ? 1 : 0;
     const effectiveMarkLayers = markLayers;
-    let score = attackPreview(s, key);
+    const targetType = cardTarget(c);
+    const previews = enemies.map(unit => attackPreview(s, key, unit.id));
+    let score = targetType === 'allEnemies'
+      ? previews.reduce((sum, value) => sum + value, 0)
+      : targetType === 'randomEnemy'
+        ? (previews.length ? previews.reduce((sum, value) => sum + value, 0) / previews.length : 0)
+        : Math.max(0, ...previews);
     score += Math.min(incoming, (c.block || 0) + stats.skillPower + (context.sameSchool ? bonuses.chainBlock || 0 : 0)) * 1.15;
     const estimatedHealing = (c.heal || 0) + stats.healing + (context.sameSchool ? bonuses.chainHealing || 0 : 0);
     score += Math.min(missingHp, Math.round(estimatedHealing * (1 + (bonuses.healingPct || 0) + (context.alternating ? bonuses.rhythmHealingPct || 0 : 0)))) * 1.1;
@@ -1706,6 +1936,22 @@ export function chooseAutoCard(s) {
     return { index, card: c, score: score / Math.max(1, c.cost || .65) };
   }).filter(item => item.card.cost <= s.energy).sort((a, b) => b.score - a.score);
   return affordable[0]?.index ?? -1;
+}
+
+export function chooseAutoTarget(s, key) {
+  if (!s || s.phase !== 'combat') return null;
+  const c = card(key);
+  if (cardTarget(c) !== 'singleEnemy') return null;
+  const enemies = livingEnemies(s);
+  if (!enemies.length) return null;
+  const ranked = enemies.map(unit => {
+    const damage = attackPreview(s, key, unit.id);
+    const lethal = damage >= unit.hp ? 10000 : 0;
+    const advantage = elementMultiplier(c.element, unit.element) > 1 ? 120 : 0;
+    const summonPriority = unit.kind === 'summon' ? 15 : 0;
+    return { id: unit.id, score: lethal + advantage + summonPriority + damage - unit.hp * .01 };
+  }).sort((left, right) => right.score - left.score);
+  return ranked[0]?.id || enemies[0].id;
 }
 
 function recommendedDeck(s, size = 10) {
@@ -1741,7 +1987,10 @@ function recommendedDeck(s, size = 10) {
 }
 
 function victory(s) {
-  const foe = enemyFor(s);
+  const primaryUnit = (s.enemies || []).find(unit => unit.kind === 'boss')
+    || (s.enemies || []).find(unit => unit.kind !== 'summon')
+    || (s.enemies || [])[0];
+  const foe = enemyFor(s, primaryUnit?.id);
   const difficulty = DIFFICULTIES[s.difficulty] || DIFFICULTIES.standard;
   const rewardScale = difficulty.reward;
   const encounterGoldBonus = s.bossFight ? 32 : s.elite ? 16 : 0;
@@ -1814,10 +2063,53 @@ function victory(s) {
   else log(s, '这场战斗没有掉落装备。');
   log(s, `战斗结束后回复 ${recovery} 点生命。`);
 }
+function ensureBattleUnits(s) {
+  if (s.phase === 'combat' && (!Array.isArray(s.enemies) || !s.enemies.length) && s.enemy) {
+    const template = baseEnemyFor(s);
+    const legacy = {
+      id: 'legacy-enemy',
+      side: 'enemy',
+      kind: s.bossFight ? 'boss' : 'enemy',
+      foe: s.foe || 0,
+      summonKey: null,
+      slot: s.bossFight ? 1 : 0,
+      element: enemyElement(template, s.stage, s.foe || 0),
+      hp: s.enemy.hp,
+      maxHp: s.enemy.maxHp,
+      block: s.enemy.block || 0,
+      mark: s.enemy.mark || 0,
+      charge: s.enemy.charge || 0,
+      alive: s.enemy.hp > 0,
+      summonedOnTurn: 0,
+    };
+    s.enemies = [legacy];
+    s.selectedEnemyId = legacy.id;
+  }
+  if (s.phase === 'combat' && Array.isArray(s.enemies) && s.enemies.length) {
+    let selected = battleEnemyById(s, s.selectedEnemyId) || s.enemies[0];
+    // Keep the legacy single-enemy facade writable. Older saves, tests and
+    // debug tools may still assign state.enemy directly before a transition.
+    if (selected && s.enemy) {
+      for (const field of ['hp', 'maxHp', 'block', 'mark', 'charge']) {
+        if (Number.isFinite(s.enemy[field])) selected[field] = s.enemy[field];
+      }
+      selected.alive = selected.hp > 0;
+    }
+    if (s.enemies.length === 1 && selected?.kind !== 'summon') {
+      selected.foe = Number.isInteger(s.foe) ? s.foe : selected.foe;
+      selected.kind = s.bossFight ? 'boss' : 'enemy';
+      selected.element = enemyElement(baseEnemyFor(s, selected.foe, s.bossFight), s.stage, selected.foe);
+    }
+    syncSelectedEnemy(s, selected?.id);
+  }
+  syncPlayerUnit(s);
+}
+
 // All game transitions are pure and serializable, so tests and saved runs use the same rules.
 export function transition(state, action) {
   if (!state || !action) return state;
   const s = JSON.parse(JSON.stringify(state));
+  ensureBattleUnits(s);
   if (action.type === 'revive' && s.phase === 'lost') {
     const equippedIds = new Set(Object.values(s.equipment || {}).filter(Boolean));
     const lostNames = s.inventory.filter(item => equippedIds.has(item.id)).map(itemName);
@@ -2269,7 +2561,8 @@ export function transition(state, action) {
   }
   if (action.type === 'auto' && s.phase === 'combat' && s.battleMode === 'auto') {
     const index = chooseAutoCard(s);
-    return transition(s, index >= 0 ? { type: 'play', index } : { type: 'end' });
+    if (index < 0) return transition(s, { type: 'end' });
+    return transition(s, { type: 'play', index, targetId: chooseAutoTarget(s, s.hand[index]) });
   }
   if (action.type === 'node' && s.phase === 'map') {
     const nodes = chapterMap(s.stage, s.mapSeed);
@@ -2587,7 +2880,14 @@ export function transition(state, action) {
     if (!Number.isInteger(action.index) || action.index < 0 || action.index >= s.hand.length) return state;
     const key = s.hand[action.index], c = card(key);
     if (c.cost > s.energy) return state;
-    const breakdown = attackBreakdown(s, key);
+    const targets = cardTargets(s, c, action.targetId);
+    const primaryTarget = targets[0] || syncSelectedEnemy(s);
+    if (primaryTarget) syncSelectedEnemy(s, primaryTarget.id);
+    const targetBlocksBefore = new Map(targets.map(target => [target.id, target.block || 0]));
+    const breakdowns = targets.length
+      ? targets.map(target => attackBreakdown(s, key, target.id))
+      : [attackBreakdown(s, key)];
+    const breakdown = breakdowns[0];
     const consumedLucidCharge = c.damage ? s.lucidCharge || 0 : 0;
     const { bonuses, stats, sameSchool, chain, mode, alternating } = breakdown.context;
     s.hand.splice(action.index, 1); s.energy -= c.cost; s.played++;
@@ -2598,7 +2898,7 @@ export function transition(state, action) {
     let traitTriggered = false;
     let markGained = 0;
     if (c.mark) {
-      markGained = cardMarkGain(s, c);
+      markGained = cardMarkGain(s, c, primaryTarget);
       if (s.character === 'uncle' && !s.traitUsed) {
         s.traitUsed = true;
         traitTriggered = true;
@@ -2607,7 +2907,7 @@ export function transition(state, action) {
       s.block += bonuses.markBlock || 0;
       if (traitTriggered) s.block += bonuses.firstMarkBlock || 0;
     }
-    s.enemy.mark = breakdown.marksAfter;
+    if (primaryTarget) primaryTarget.mark = breakdown.marksAfter;
     if (c.energy) s.energy += c.energy;
     const warmthBonus = breakdown.warmthSpent || 0;
     if (warmthBonus) {
@@ -2656,12 +2956,19 @@ export function transition(state, action) {
         s.energy += lucidBonusEnergy;
       }
     }
-    const damage = breakdown.total;
-    const weakpointDamage = breakdown.weakpoint;
-    const absorbedDamage = Math.max(0, (state.enemy?.block || 0) - breakdown.enemyBlock);
-    s.enemy.block = breakdown.enemyBlock;
+    const damage = breakdowns.reduce((sum, item) => sum + item.total, 0);
+    const weakpointDamage = breakdowns.reduce((sum, item) => sum + item.weakpoint, 0);
+    let absorbedDamage = 0;
+    breakdowns.forEach((item, index) => {
+      const target = targets[index];
+      if (!target) return;
+      absorbedDamage += Math.max(0, (targetBlocksBefore.get(target.id) || 0) - item.enemyBlock);
+      target.block = item.enemyBlock;
+      target.mark = item.marksAfter;
+      if (item.total) target.hp = Math.max(0, target.hp - item.total);
+      if (target.hp <= 0) target.alive = false;
+    });
     if (damage) {
-      s.enemy.hp = Math.max(0, s.enemy.hp - damage);
       if (consumedLucidCharge) s.lucidCharge = Math.max(0, s.lucidCharge - consumedLucidCharge);
     }
     // Draw before discarding the played card to prevent a zero-cost card drawing itself.
@@ -2690,6 +2997,9 @@ export function transition(state, action) {
     if (mode !== 'support') s.lastCardMode = mode;
     const effects = [];
     if (damage) effects.push(`造成 ${damage} 点伤害`);
+    if (targets.length > 1) effects.push(`命中 ${targets.length} 个目标`);
+    const advantageCount = breakdowns.filter(item => item.elementMultiplier > 1).length;
+    if (advantageCount) effects.push(`元素克制 ×${advantageCount}`);
     if (absorbedDamage) effects.push(`护盾抵消 ${absorbedDamage} 点`);
     if (weakpointDamage) effects.push(`其中 ${weakpointDamage} 点弱点伤害无视护盾`);
     if (gainedBlock) effects.push(`获得 ${gainedBlock} 点护盾`);
@@ -2710,20 +3020,26 @@ export function transition(state, action) {
     log(s, `你打出「${c.name}」：${effects.join('，') || '效果发动'}。`);
     logBattleStatus(s);
     (c.exhaust ? s.exhaust : s.discard).push(key);
+    syncSelectedEnemy(s);
+    syncPlayerUnit(s);
     if (s.hp <= 0) { s.phase = 'lost'; log(s, '旅途暂止于此。'); }
-    else if (s.enemy.hp <= 0) victory(s);
+    else if (!livingEnemies(s).length) victory(s);
     return s;
   }
   if (action.type === 'end' && s.phase === 'combat') {
-    const move = intent(s);
-    const foe = enemyFor(s);
     const bonuses = specializationBonuses(s);
     const stats = equipmentStats(s);
+    const actingEnemies = [...livingEnemies(s)].sort((left, right) => (left.slot || 0) - (right.slot || 0));
     s.healingSuppression = Math.max(0, (s.healingSuppression || 0) - 1);
     const retained = s.hand.filter(key => card(key).retain);
     s.discard.push(...s.hand.filter(key => !card(key).retain)); s.hand = retained;
-    s.enemy.block = 0;
     s.weak = Math.max(0, s.weak - 1);
+    for (const unit of actingEnemies) unit.block = 0;
+    for (const actingUnit of actingEnemies) {
+      if (actingUnit.hp <= 0 || actingUnit.alive === false) continue;
+      syncSelectedEnemy(s, actingUnit.id);
+      const move = intent(s, actingUnit.id);
+      const foe = enemyFor(s, actingUnit.id);
     if (move.kind === 'guard') {
       s.enemy.block = move.value;
       log(s, `${foe.name}获得 ${move.value} 点护盾。`);
@@ -2731,6 +3047,21 @@ export function transition(state, action) {
       const healed = Math.min(move.value, s.enemy.maxHp - s.enemy.hp);
       s.enemy.hp += healed;
       log(s, `${foe.name}恢复 ${healed} 点生命。`);
+    } else if (move.kind === 'healAlly') {
+      const target = [...livingEnemies(s)].sort((left, right) => (left.hp / left.maxHp) - (right.hp / right.maxHp))[0] || actingUnit;
+      const healed = Math.min(move.value, target.maxHp - target.hp);
+      target.hp += healed;
+      log(s, `${foe.name}为${enemyFor(s, target.id).name}恢复 ${healed} 点生命。`);
+    } else if (move.kind === 'guardAll') {
+      for (const target of livingEnemies(s)) target.block += move.value;
+      log(s, `${foe.name}为敌方全体提供 ${move.value} 点护盾。`);
+    } else if (move.kind === 'summon') {
+      const summoned = addEnemySummon(s, move.summon, move.count || 1, actingUnit.id);
+      if (summoned.length) {
+        log(s, `${foe.name}召唤了${summoned.map(unit => enemyFor(s, unit.id).name).join('、')}。`);
+      } else {
+        log(s, `${foe.name}尝试召唤，但战场已经没有空位。`);
+      }
     } else if (move.kind === 'charge') {
       s.enemy.charge = move.value;
       log(s, `${foe.name}开始蓄力，下回合将造成 ${move.value} 点伤害。`);
@@ -2774,16 +3105,22 @@ export function transition(state, action) {
       }
       if (move.kind === 'curse') { s.weak = 1; log(s, '你陷入动摇，下回合共鸣效果降低 25%。'); }
     }
+      if (actingUnit.hp <= 0) actingUnit.alive = false;
+      if (s.hp <= 0) break;
+    }
+    syncSelectedEnemy(s);
+    syncPlayerUnit(s);
     logBattleStatus(s);
     s.totalTurns++;
     if (s.hp <= 0) { s.phase = 'lost'; log(s, '旅途暂止于此。'); return s; }
-    if (s.enemy.hp <= 0) { victory(s); return s; }
+    if (!livingEnemies(s).length) { victory(s); return s; }
     const retainedBlock = s.character === 'xiaoshuai' ? Math.floor(s.block * Math.min(.8, .2 + (bonuses.retainedBlockPct || 0))) : 0;
     s.turn++; s.energy = 3; s.traitUsed = false;
     s.block = retainedBlock + (s.pillowActive ? ambientEventValues(s).pillowBlock : 0) + equipmentStats(s).block + (s.nextBlock || 0);
     s.nextBlock = 0;
     s.lastCardSchool = null; s.lastCardMode = null; s.schoolChain = 0; s.rhythmTriggers = 0; s.recycleTriggered = false; s.healDrawTriggered = false; s.lucidFocusTriggered = false; s.counterTriggers = 0;
     draw(s, Math.max(0, 5 - s.hand.length)); log(s, `第 ${s.turn} 回合开始，能量恢复至 3。`);
+    syncPlayerUnit(s);
     return s;
   }
   if (action.type === 'reward' && s.phase === 'reward') {

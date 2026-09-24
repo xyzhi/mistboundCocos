@@ -7,8 +7,8 @@ import {
   Sparkles, Swords, Target, TentTree, Trash2, TrendingUp, Volume2, VolumeX, Wind, Wrench, X,
 } from 'lucide-react';
 import {
-  AFFIX_LABELS, CARDS, CHARACTERS, CHEATS_ENABLED, CHECKPOINTS, CHECKPOINT_STEPS, CHAPTER_LOOT, CHAPTERS, CRITICAL_SIDE_QUESTS, DIFFICULTIES, DISORDER_GOLD_LOSS_PERCENT, ENEMIES, EQUIPMENT_ART, GUESTS, ITEMS, MAIN_STORY, MAX_SPECIALIZATION_POINTS, MYSTERY_STATIONS, SAVE_KEY, SEGMENT_NAMES, SIDE_STORIES, SLOT_LABELS, SPECIALIZATIONS, VERSION, attackBreakdown, canInvestSpecialization, card,
-  ambientEventValues, cardBaseKey, cardRank, chapterMap, chooseAutoCard, commissionStatus, compareCardKeys, description, enemyFor, equipmentStats, facilityCost, intent, itemFor, itemLines, MAP_STEPS,
+  AFFIX_LABELS, CARDS, CHARACTERS, CHEATS_ENABLED, CHECKPOINTS, CHECKPOINT_STEPS, CHAPTER_LOOT, CHAPTERS, CRITICAL_SIDE_QUESTS, DIFFICULTIES, DISORDER_GOLD_LOSS_PERCENT, ELEMENTS, ENEMIES, EQUIPMENT_ART, GUESTS, ITEMS, MAIN_STORY, MAX_SPECIALIZATION_POINTS, MYSTERY_STATIONS, SAVE_KEY, SEGMENT_NAMES, SIDE_STORIES, SLOT_LABELS, SPECIALIZATIONS, VERSION, attackBreakdown, canInvestSpecialization, card, cardTarget,
+  ambientEventValues, cardBaseKey, cardRank, chapterMap, chooseAutoCard, chooseAutoTarget, commissionStatus, compareCardKeys, description, enemyFor, equipmentStats, facilityCost, intent, itemFor, itemLines, livingEnemies, MAP_STEPS,
   disorderGoldLoss, itemDetailLines, itemName, itemScore, itemStats, itemTier, itemUpgradeCost, magicHouseCooldownRemaining, mainStorySpecializationReward, newRun, rankedCardKey, rerollCost, restore, reviveCost, salvageValue, serialize, sideCardTurnInCandidates, sideGearTurnInCandidates, skillRewardRank, specializationAvailablePoints, specializationBonuses, specializationNodeText, specializationPointTotal, specializationSpent, specializationUnlocked, transition, upgradeCardKey,
 } from './game.mjs';
 import './styles.css';
@@ -125,9 +125,9 @@ function gearAtlasStyle(baseKey) {
   return null;
 }
 
-function enemySpriteProps(state) {
-  if (state.bossFight) return { className: 'boss-sprite', style: { backgroundImage: `url(${PIXEL_BOSSES[state.stage]})` } };
-  const art = enemyFor(state).art || 0;
+function enemySpriteProps(state, unit = null) {
+  if (unit?.kind === 'boss' || (!unit && state.bossFight)) return { className: 'boss-sprite', style: { backgroundImage: `url(${PIXEL_BOSSES[state.stage]})` } };
+  const art = enemyFor(state, unit?.id).art || 0;
   const column = art % 4;
   const row = Math.floor(art / 4);
   return {
@@ -141,6 +141,7 @@ function enemySpriteProps(state) {
 }
 
 const ICONS = { sword: Swords, swords: Swords, shield: Shield, target: Target, sparkles: Sparkles, heart: Heart, wind: Wind, moon: Moon, flame: Flame };
+const TARGET_LABELS = { singleEnemy: '🎯 单体', allEnemies: '◉ 全体', randomEnemy: '🎲 随机', self: '👤 自身', singleAlly: '✚ 友方', allAllies: '✚ 全体友方' };
 const INTENTS = {
   attack: move => `造成 ${move.value}${move.hits ? ` × ${move.hits}` : ''} 伤害`,
   guard: move => `获得 ${move.value} 护盾`,
@@ -151,6 +152,9 @@ const INTENTS = {
   suppress: move => `治疗压制 ${move.value} 回合`,
   jam: move => `塞入 ${move.value} 张杂念`,
   heal: move => `恢复 ${move.value} 点生命`,
+  healAlly: move => `治疗生命最低的同伴 ${move.value}`,
+  guardAll: move => `敌方全体获得 ${move.value} 护盾`,
+  summon: move => `召唤 ${move.count || 1} 个元素单位`,
 };
 const capturePress = event => {
   if (event.currentTarget.setPointerCapture && Number.isInteger(event.pointerId)) event.currentTarget.setPointerCapture(event.pointerId);
@@ -362,16 +366,18 @@ function BattleLogLine({ text, enemyName }) {
 function CardView({ cardKey, onClick, onPointerDown, onPointerMove, onPointerUp, onPointerCancel, handIndex, disabled = false, preview = null, compact = false, active = false, selected = false, detached = false, playReady = false, ghost = false, ghostTarget = null, isNew = false, style }) {
   const c = card(cardKey);
   const Icon = ICONS[c.icon] || Sparkles;
+  const element = ELEMENTS[c.element] || ELEMENTS.neutral;
   const interactive = Boolean(onClick || onPointerDown);
   return (
     <button className={`game-card ${c.type} ${c.equipmentGranted ? 'equipment-granted' : ''} ${compact ? 'compact' : ''} ${active ? 'auto-active' : ''} ${selected ? 'selected' : ''} ${detached ? 'detached' : ''} ${playReady ? 'play-ready' : ''} ${ghost ? 'throw-ghost' : ''} ${ghostTarget ? `${ghostTarget}-target` : ''} ${interactive ? '' : 'read-only'}`} style={style} data-hand-index={handIndex} tabIndex={ghost ? -1 : undefined} aria-hidden={ghost || undefined} onClick={onClick} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerCancel} disabled={disabled}>
       <span className="card-cost">{c.cost}</span>
       {isNew && <span className="new-badge">NEW</span>}
-      <span className="card-school">{c.equipmentGranted ? '装备技' : c.school}</span>
+      <span className="card-school">{element.icon} {c.equipmentGranted ? '装备技' : c.school}</span>
+      <span className="card-target">{TARGET_LABELS[cardTarget(c)] || cardTarget(c)}</span>
       <span className="card-art pixel-art" style={cardAtlasStyle(cardKey)}><i className="card-category"><Icon size={compact ? 12 : 14} strokeWidth={1.8} /></i></span>
       <strong>{c.name}</strong>
       <span className="card-rule">{description(cardKey).join('。')}。</span>
-      {preview?.total > 0 && <span className="card-preview">预计伤害 {preview.total}</span>}
+      {preview?.total > 0 && <span className="card-preview">预计伤害 {preview.total}{preview.elementMultiplier > 1 ? ' · 克制' : ''}</span>}
       <em>{c.flavor}</em>
     </button>
   );
@@ -534,6 +540,8 @@ function Battle({ state, dispatch, outcome = null, battleSpeed = 1, onBattleSpee
   const { open: tipOpen } = React.useContext(TooltipContext);
   const [tutorialStep, setTutorialStep] = useState(0);
   const [selectedCard, setSelectedCard] = useState(-1);
+  const [pendingTargetCard, setPendingTargetCard] = useState(-1);
+  const [focusedEnemyId, setFocusedEnemyId] = useState(null);
   const [dragX, setDragX] = useState(0);
   const [dragLift, setDragLift] = useState(0);
   const [cardDetached, setCardDetached] = useState(false);
@@ -547,18 +555,26 @@ function Battle({ state, dispatch, outcome = null, battleSpeed = 1, onBattleSpee
         : state.hand.length === 4 ? -24
           : state.hand.length === 5 ? -48
             : -64;
-  const enemy = enemyFor(state);
-  const move = intent(state);
+  const enemies = livingEnemies(state);
+  const allEnemyUnits = Array.isArray(state.enemies) && state.enemies.length ? state.enemies : (state.enemy ? [state.enemy] : []);
+  const focusedUnit = enemies.find(unit => unit.id === focusedEnemyId)
+    || enemies.find(unit => unit.id === state.selectedEnemyId)
+    || enemies[0]
+    || allEnemyUnits.find(unit => unit.id === state.selectedEnemyId)
+    || allEnemyUnits[0]
+    || state.enemy;
+  const enemy = enemyFor(state, focusedUnit?.id);
+  const move = focusedUnit ? intent(state, focusedUnit.id) : null;
   const battleEquipmentStats = equipmentStats(state);
   const battleSpecialization = specializationBonuses(state);
   const autoIndex = state.battleMode === 'auto' ? chooseAutoCard(state) : -1;
-  const recentAction = [...state.battleLog].reverse().find(item => item.startsWith('你打出') || item.startsWith(enemy.name)) || '';
+  const enemyNames = allEnemyUnits.map(unit => enemyFor(state, unit.id).name);
+  const recentAction = [...state.battleLog].reverse().find(item => item.startsWith('你打出') || enemyNames.some(name => item.startsWith(name))) || '';
   const enemyHit = (recentAction.startsWith('你打出') && recentAction.includes('伤害')) || outcome === 'victory';
-  const playerHit = recentAction.startsWith(enemy.name) && recentAction.includes('伤害');
+  const playerHit = enemyNames.some(name => recentAction.startsWith(name)) && recentAction.includes('伤害');
   const playerGuarded = recentAction.startsWith('你打出') && recentAction.includes('护盾');
   const energyGain = recentAction.startsWith('你打出') && recentAction.includes('能量');
-  const actionKey = `${state.turn}-${state.played}-${state.hp}-${state.enemy.hp}-${recentAction}`;
-  const sprite = enemySpriteProps(state);
+  const actionKey = `${state.turn}-${state.played}-${state.hp}-${allEnemyUnits.map(unit => unit.hp).join('-')}-${recentAction}`;
   const bossCleared = outcome === 'victory' && state.bossFight;
   const previousEnemyHp = useRef(state.enemy.hp);
   const previousPlayerHp = useRef(state.hp);
@@ -600,12 +616,15 @@ function Battle({ state, dispatch, outcome = null, battleSpeed = 1, onBattleSpee
     recordStatDelta('mark', state.enemy.mark - previousMark.current, '弱点');
     previousMark.current = state.enemy.mark;
   }, [state.enemy.mark]);
-  const spawnThrowGhost = (cardKey, rect) => {
+  const spawnThrowGhost = (cardKey, rect, targetId = null) => {
     if (!rect) return;
     const c = card(cardKey);
     const enemyTarget = Boolean(c.damage || c.mark || c.markBurst || c.consumeMark);
     const target = enemyTarget ? 'enemy' : 'self';
-    const targetRect = document.querySelector(enemyTarget ? '.enemy-sprite' : '.battle-character-avatar')?.getBoundingClientRect();
+    const enemySelector = targetId
+      ? `.enemy-unit[data-enemy-id="${targetId}"] .enemy-unit-sprite`
+      : '.enemy-unit.is-focused .enemy-unit-sprite, .enemy-unit .enemy-unit-sprite';
+    const targetRect = document.querySelector(enemyTarget ? enemySelector : '.battle-character-avatar')?.getBoundingClientRect();
     const ghostId = `${Date.now()}-${cardKey}`;
     setThrowGhosts(current => [...current, {
       id: ghostId, cardKey, left: rect.left, top: rect.top, width: rect.width, height: rect.height,
@@ -623,7 +642,8 @@ function Battle({ state, dispatch, outcome = null, battleSpeed = 1, onBattleSpee
     if (state.battleMode !== 'auto' || state.phase !== 'combat' || tipOpen) return undefined;
     const timer = window.setTimeout(() => {
       const activeCard = document.querySelector('.hand .game-card.auto-active');
-      if (autoIndex >= 0 && activeCard) spawnThrowGhost(state.hand[autoIndex], activeCard.getBoundingClientRect());
+      const autoTarget = autoIndex >= 0 ? chooseAutoTarget(state, state.hand[autoIndex]) : null;
+      if (autoIndex >= 0 && activeCard) spawnThrowGhost(state.hand[autoIndex], activeCard.getBoundingClientRect(), autoTarget);
       dispatch({ type: 'auto' });
     }, 720 / battleSpeed);
     return () => window.clearTimeout(timer);
@@ -638,6 +658,7 @@ function Battle({ state, dispatch, outcome = null, battleSpeed = 1, onBattleSpee
     setDragLift(0);
     setCardDetached(false);
     setPlayReady(false);
+    setPendingTargetCard(-1);
   }, [state.hand, state.turn]);
   useEffect(() => () => dissolveTimers.current.forEach(timer => window.clearTimeout(timer)), []);
   const playThreshold = () => Math.min(48, window.innerHeight * .065);
@@ -709,12 +730,20 @@ function Battle({ state, dispatch, outcome = null, battleSpeed = 1, onBattleSpee
       const hand = event.currentTarget.closest('.hand');
       const playedElement = hand?.querySelector(`[data-hand-index="${gesture.index}"]`);
       const rect = playedElement?.getBoundingClientRect();
-      spawnThrowGhost(state.hand[gesture.index], rect);
+      const playedKey = state.hand[gesture.index];
+      const targetType = cardTarget(playedKey);
       setDragX(0);
       setDragLift(0);
       setCardDetached(false);
       setPlayReady(false);
-      dispatch({ type: 'play', index: gesture.index });
+      if (targetType === 'singleEnemy' && enemies.length > 1) {
+        setPendingTargetCard(gesture.index);
+        setSelectedCard(gesture.index);
+        return;
+      }
+      const targetId = targetType === 'singleEnemy' ? enemies[0]?.id : null;
+      spawnThrowGhost(playedKey, rect, targetId);
+      dispatch({ type: 'play', index: gesture.index, targetId });
       return;
     }
     setDragX(0);
@@ -722,29 +751,52 @@ function Battle({ state, dispatch, outcome = null, battleSpeed = 1, onBattleSpee
     setCardDetached(false);
     setPlayReady(false);
   };
+  const chooseEnemyTarget = unit => {
+    setFocusedEnemyId(unit.id);
+    if (pendingTargetCard < 0) return;
+    const hand = document.querySelector('.hand');
+    const playedElement = hand?.querySelector(`[data-hand-index="${pendingTargetCard}"]`);
+    const rect = playedElement?.getBoundingClientRect();
+    const playedKey = state.hand[pendingTargetCard];
+    if (!playedKey) { setPendingTargetCard(-1); return; }
+    spawnThrowGhost(playedKey, rect, unit.id);
+    dispatch({ type: 'play', index: pendingTargetCard, targetId: unit.id });
+    setPendingTargetCard(-1);
+    setSelectedCard(-1);
+  };
   return (
     <>
       <section className={`battlefield battle-speed-scope ${bossCleared ? 'boss-cleared' : ''}`} style={{ '--battle-speed': battleSpeed }}>
         <div className="battle-background pixel-art" style={{ backgroundImage: `url(${PIXEL_BACKGROUNDS[state.stage]})` }} />
         <div className="battle-depth" />
-        <div key={`enemy-${state.enemy.hp}-${outcome || 'fight'}`} className={`enemy-sprite pixel-art ${sprite.className} ${enemyHit ? 'enemy-hit' : ''} ${outcome === 'victory' ? 'enemy-defeated' : ''} ${bossCleared ? 'boss-defeated' : ''}`} style={sprite.style} />
-        <div className={`enemy-ground-shadow ${enemyHit ? 'enemy-hit' : ''} ${outcome === 'victory' ? 'enemy-defeated' : ''}`} />
-        <div className="enemy-health-float">
-          <div><strong>{enemy.name}</strong><Tip text="敌人生命降到 0 即可获胜。"><span>生命 {state.enemy.hp} / {state.enemy.maxHp}</span></Tip></div>
-          <Bar value={state.enemy.hp} max={state.enemy.maxHp} tone="enemy" />
-          {!outcome && <div className="enemy-next-action"><small>敌人下回合</small><span>{INTENTS[move.kind](move)}</span></div>}
-          {state.enemy.block > 0 && <Tip text="敌人护盾会优先抵消你造成的伤害。"><b><Shield size={13} />护盾 {state.enemy.block}</b></Tip>}
-          {enemyDelta && <em key={enemyDelta.key} className={`health-delta ${enemyDelta.value > 0 ? 'heal' : 'damage'}`}>{enemyDelta.value > 0 ? '+' : ''}{enemyDelta.value}</em>}
-          <div className="enemy-stat-deltas">{statDeltas.filter(item => ['enemy-block', 'mark'].includes(item.kind)).map(item => <em key={item.key} className={`stat-delta ${item.value > 0 ? 'gain' : 'loss'}`}>{item.label} {item.value > 0 ? '+' : ''}{item.value}</em>)}</div>
+        {pendingTargetCard >= 0 && !outcome && <div className="target-select-banner"><Target size={16} /><span>选择「{card(state.hand[pendingTargetCard])?.name}」的目标</span><button type="button" onClick={() => { setPendingTargetCard(-1); setSelectedCard(-1); }}>取消</button></div>}
+        <div className={`enemy-party enemy-count-${Math.max(1, allEnemyUnits.filter(unit => outcome || (unit.hp > 0 && unit.alive !== false)).length)} ${allEnemyUnits.some(unit => unit.kind === 'boss') ? 'has-boss' : ''} ${pendingTargetCard >= 0 ? 'is-targeting' : ''}`}>
+          {allEnemyUnits.filter(unit => outcome || (unit.hp > 0 && unit.alive !== false)).map(unit => {
+            const model = enemyFor(state, unit.id);
+            const sprite = enemySpriteProps(state, unit);
+            const unitMove = !outcome && unit.hp > 0 ? intent(state, unit.id) : null;
+            const element = ELEMENTS[unit.element] || ELEMENTS.neutral;
+            const focused = focusedUnit?.id === unit.id;
+            return <button type="button" key={unit.id || model.name} data-enemy-id={unit.id} className={`enemy-unit ${focused ? 'is-focused' : ''} ${pendingTargetCard >= 0 && unit.hp > 0 ? 'is-targetable' : ''} ${unit.kind === 'boss' ? 'is-boss' : ''} ${unit.kind === 'summon' ? 'is-summon' : ''} ${unit.hp <= 0 || unit.alive === false ? 'is-defeated' : ''}`} onClick={() => !outcome && unit.hp > 0 && chooseEnemyTarget(unit)} disabled={Boolean(outcome)}>
+              <span className={`enemy-unit-sprite pixel-art ${sprite.className} ${enemyHit && focused ? 'enemy-hit' : ''} ${unit.hp <= 0 || outcome === 'victory' ? 'enemy-defeated' : ''} ${bossCleared && unit.kind === 'boss' ? 'boss-defeated' : ''}`} style={sprite.style} />
+              <span className="enemy-unit-shadow" />
+              <span className="enemy-unit-card">
+                <span className="enemy-unit-heading"><strong><i>{element.icon}</i>{model.name}</strong><small>{unit.hp} / {unit.maxHp}</small></span>
+                <Bar value={unit.hp} max={unit.maxHp} tone="enemy" />
+                {unitMove && <span className="enemy-unit-intent"><small>{unit.kind === 'summon' ? '召唤物行动' : '下回合'}</small><b>{(INTENTS[unitMove.kind] || (value => value.kind))(unitMove)}</b></span>}
+                <span className="enemy-unit-status">{unit.block > 0 && <b><Shield size={11} />{unit.block}</b>}{unit.mark > 0 && <b><Target size={11} />{unit.mark}</b>}{unit.kind === 'summon' && <em>召唤</em>}</span>
+              </span>
+            </button>;
+          })}
         </div>
         <div className="scene-vignette" />
         {enemyHit && <div key={`slash-${actionKey}`} className="slash-effect" />}
         {bossCleared && <div className="boss-defeat-fx" aria-hidden="true"><div className="boss-seal"><Crown /></div>{Array.from({ length: 24 }, (_, index) => <i key={index} style={{ '--shard': index, '--shard-x': `${18 + (index * 29) % 70}%`, '--shard-y': `${12 + (index * 17) % 72}%`, '--shard-delay': `${(index % 8) * 55}ms` }} />)}</div>}
         {outcome && <div className={`battle-result ${outcome} ${bossCleared ? 'boss-victory' : ''}`}><small>{bossCleared ? `CHAPTER ${state.stage + 1} CLEARED` : outcome === 'victory' ? 'DREAM CLEARED' : 'THE DREAM BREAKS'}</small><strong>{bossCleared ? '梦醒了' : outcome === 'victory' ? '胜利' : '挑战失败'}</strong><span>{bossCleared ? `${MAIN_STORY[state.stage].guest}的梦境留下了一段清晨记录` : outcome === 'victory' ? '恭喜，梦境重新安静下来' : '别担心，房车会带你回到灯下'}</span></div>}
         <div className="enemy-panel">
-          <div className="enemy-name"><span>{enemy.title}</span><h2>{enemy.name}</h2></div>
+          <div className="enemy-name"><span>{enemy.title}</span><h2><i className="enemy-element-inline">{(ELEMENTS[focusedUnit?.element] || ELEMENTS.neutral).icon}</i>{enemy.name}</h2></div>
           {enemy.trait && <div className="enemy-trait"><b>{enemy.trait}</b><span>{enemy.traitText}</span></div>}
-          {state.enemy.mark > 0 && <Tip text="当前弱点层数就是下一段攻击追加的无视护盾伤害。每段消耗 1 层，因此 4 层弱点会依次追加 4、3、2、1 点伤害。"><div className="mark"><Target size={14} />弱点 {state.enemy.mark}</div></Tip>}
+          {focusedUnit?.mark > 0 && <Tip text="当前弱点层数就是下一段攻击追加的无视护盾伤害。每段消耗 1 层，因此 4 层弱点会依次追加 4、3、2、1 点伤害。"><div className="mark"><Target size={14} />弱点 {focusedUnit.mark}</div></Tip>}
         </div>
       </section>
 
@@ -777,8 +829,8 @@ function Battle({ state, dispatch, outcome = null, battleSpeed = 1, onBattleSpee
             {state.hand.map((key, index) => {
               const offset = index - (state.hand.length - 1) / 2;
               return (
-              <CardView key={`${key}-${index}`} cardKey={key} disabled={state.battleMode === 'auto' || card(key).cost > state.energy}
-                preview={attackBreakdown(state, key)} active={index === autoIndex} selected={index === selectedCard} detached={index === selectedCard && cardDetached} playReady={index === selectedCard && playReady}
+              <CardView key={`${key}-${index}`} cardKey={key} disabled={pendingTargetCard >= 0 || state.battleMode === 'auto' || card(key).cost > state.energy}
+                preview={attackBreakdown(state, key, focusedUnit?.id)} active={index === autoIndex} selected={index === selectedCard} detached={index === selectedCard && cardDetached} playReady={index === selectedCard && playReady}
                 style={{ '--fan-offset': offset, '--fan-y': Math.abs(offset) * 7, '--fan-z': 20 - Math.round(Math.abs(offset)), '--drag-x': `${index === selectedCard ? dragX : 0}px`, '--drag-lift': `${index === selectedCard ? dragLift : 0}px` }}
                 handIndex={index} onPointerDown={event => beginCardGesture(index, event)} onPointerMove={moveCardGesture}
                 onPointerUp={event => finishCardGesture(event)} onPointerCancel={event => finishCardGesture(event, true)} />
@@ -793,7 +845,7 @@ function Battle({ state, dispatch, outcome = null, battleSpeed = 1, onBattleSpee
         <div className="turn-controls">
           <Tip text="抽牌堆用完后，弃牌堆会重新洗回抽牌堆。"><span>{state.battleMode === 'auto' ? '自动出牌中 · ' : ''}抽牌 {state.draw.length} · 弃牌 {state.discard.length}</span></Tip>
           <div className="speed-control" aria-label="战斗速度"><small>速度</small>{[1, 2, 3].map(speed => <button key={speed} className={battleSpeed === speed ? 'active' : ''} onClick={() => onBattleSpeed(speed)}>x{speed}</button>)}</div>
-          <button className="end-turn" disabled={state.battleMode === 'auto'} onClick={() => dispatch({ type: 'end' })}>{state.battleMode === 'auto' ? '自动行动' : '结束回合'}</button>
+          <button className="end-turn" disabled={state.battleMode === 'auto' || pendingTargetCard >= 0} onClick={() => dispatch({ type: 'end' })}>{pendingTargetCard >= 0 ? '先选择目标' : state.battleMode === 'auto' ? '自动行动' : '结束回合'}</button>
         </div>
       </section>
       {throwGhosts.map(item => <CardView key={item.id} cardKey={item.cardKey} ghost ghostTarget={item.target} style={{ left: item.left, top: item.top, width: item.width, height: item.height, '--throw-x': `${item.throwX}px`, '--throw-y': `${item.throwY}px` }} />)}
