@@ -129,15 +129,16 @@ try {
             } elseif ($attempt -eq 2) {
                 Invoke-GitLogged -Arguments @('-c', 'http.version=HTTP/1.1', 'push', '-u', $remote, $branch)
             } else {
-                Write-Log '最后一次尝试将临时绕过代理并使用 HTTP/1.1。'
+                $localProxy = 'http://127.0.0.1:9567'
+                Write-Log "最后一次尝试将使用本地代理 $localProxy 和 HTTP/1.1。"
                 $proxyNames = @('ALL_PROXY', 'HTTP_PROXY', 'HTTPS_PROXY', 'GIT_HTTP_PROXY', 'GIT_HTTPS_PROXY')
                 $proxyBackup = @{}
                 foreach ($proxyName in $proxyNames) {
                     $proxyBackup[$proxyName] = [Environment]::GetEnvironmentVariable($proxyName, 'Process')
-                    [Environment]::SetEnvironmentVariable($proxyName, $null, 'Process')
+                    [Environment]::SetEnvironmentVariable($proxyName, $localProxy, 'Process')
                 }
                 try {
-                    Invoke-GitLogged -Arguments @('-c', 'http.version=HTTP/1.1', '-c', 'http.proxy=', '-c', 'https.proxy=', 'push', '-u', $remote, $branch)
+                    Invoke-GitLogged -Arguments @('-c', 'http.version=HTTP/1.1', '-c', "http.proxy=$localProxy", '-c', "https.proxy=$localProxy", 'push', '-u', $remote, $branch)
                 } finally {
                     foreach ($proxyName in $proxyNames) {
                         [Environment]::SetEnvironmentVariable($proxyName, $proxyBackup[$proxyName], 'Process')
