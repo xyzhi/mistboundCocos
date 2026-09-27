@@ -4,6 +4,7 @@
 /local/
 /profiles/
 *.log
+/log/git/
 /dist/
 game/dist/
 /signing/

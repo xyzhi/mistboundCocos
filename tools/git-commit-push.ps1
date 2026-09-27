@@ -95,9 +95,13 @@ try {
         Write-Log "[2/4] 正在提交：$commitMessage"
         # Windows PowerShell 5 向原生命令传递包含空格的非 ASCII 参数时可能拆词。
         # 使用 UTF-8 文件传递提交说明，可完整保留中文、空格和标点。
-        $commitMessagePath = Join-Path $logDir "commit_message_$stamp.txt"
-        [IO.File]::WriteAllText($commitMessagePath, $commitMessage, [Text.UTF8Encoding]::new($false))
-        Invoke-GitLogged @('commit', "--file=$commitMessagePath")
+        $commitMessagePath = Join-Path ([IO.Path]::GetTempPath()) "mistbound_git_commit_$stamp.txt"
+        try {
+            [IO.File]::WriteAllText($commitMessagePath, $commitMessage, [Text.UTF8Encoding]::new($false))
+            Invoke-GitLogged -Arguments @('commit', "--file=$commitMessagePath")
+        } finally {
+            Remove-Item -LiteralPath $commitMessagePath -Force -ErrorAction SilentlyContinue
+        }
     } elseif ($diffCode -eq 0) {
         Write-Log ''
         Write-Log '[2/4] 没有需要提交的本地修改。'
@@ -111,7 +115,46 @@ try {
 
     Write-Log ''
     Write-Log "[4/4] 正在把 $branch 推送到 $remote……"
-    Invoke-GitLogged @('push', '-u', $remote, $branch)
+    $pushSucceeded = $false
+    $lastPushError = $null
+    for ($attempt = 1; $attempt -le 3; $attempt++) {
+        if ($attempt -gt 1) {
+            Write-Log "等待 3 秒后进行第 $attempt 次推送……"
+            Start-Sleep -Seconds 3
+        }
+
+        try {
+            if ($attempt -eq 1) {
+                Invoke-GitLogged -Arguments @('push', '-u', $remote, $branch)
+            } elseif ($attempt -eq 2) {
+                Invoke-GitLogged -Arguments @('-c', 'http.version=HTTP/1.1', 'push', '-u', $remote, $branch)
+            } else {
+                Write-Log '最后一次尝试将临时绕过代理并使用 HTTP/1.1。'
+                $proxyNames = @('ALL_PROXY', 'HTTP_PROXY', 'HTTPS_PROXY', 'GIT_HTTP_PROXY', 'GIT_HTTPS_PROXY')
+                $proxyBackup = @{}
+                foreach ($proxyName in $proxyNames) {
+                    $proxyBackup[$proxyName] = [Environment]::GetEnvironmentVariable($proxyName, 'Process')
+                    [Environment]::SetEnvironmentVariable($proxyName, $null, 'Process')
+                }
+                try {
+                    Invoke-GitLogged -Arguments @('-c', 'http.version=HTTP/1.1', '-c', 'http.proxy=', '-c', 'https.proxy=', 'push', '-u', $remote, $branch)
+                } finally {
+                    foreach ($proxyName in $proxyNames) {
+                        [Environment]::SetEnvironmentVariable($proxyName, $proxyBackup[$proxyName], 'Process')
+                    }
+                }
+            }
+            $pushSucceeded = $true
+            break
+        } catch {
+            $lastPushError = $_.Exception
+            Write-Log "第 $attempt 次推送失败：$($lastPushError.Message)"
+        }
+    }
+
+    if (-not $pushSucceeded) {
+        throw $lastPushError
+    }
 
     Write-Log ''
     Write-Log '================ 推送成功 ================'
